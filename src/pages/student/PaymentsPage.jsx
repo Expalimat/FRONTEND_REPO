@@ -1,0 +1,369 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { PageHeader } from '../../components/common/PageHeader';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { Modal } from '../../components/feedback/Modal';
+import { EmptyState } from '../../components/feedback/EmptyState';
+import { LoadingState } from '../../components/feedback/LoadingState';
+import { paymentService } from '../../services/paymentService';
+import { enrollmentService } from '../../services/enrollmentService';
+
+export const PaymentsPage = () => {
+  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Upload Form State
+  const [enrollmentId, setEnrollmentId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Landbank of the Philippines (LBP)');
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [amount, setAmount] = useState('6650.00');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileError, setFileError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const studentNo = currentUser?.studentNumber || '2026-00001';
+      const [payList, enrList] = await Promise.all([
+        paymentService.getPaymentsByStudent(studentNo),
+        enrollmentService.getEnrollmentByStudent(studentNo)
+      ]);
+      setPayments(payList);
+      setEnrollments(enrList);
+      if (enrList.length > 0) {
+        setEnrollmentId(enrList[0].id);
+        setAmount(enrList[0].fees?.total?.toString() || '6650.00');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [currentUser]);
+
+  const handleFileChange = (e) => {
+    setFileError('');
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError('Invalid file type. Only JPG, PNG, and PDF files are accepted.');
+      return;
+    }
+
+    // Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('File size exceeds the 5MB limit. Please upload a smaller file.');
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!referenceNumber.trim()) {
+      setFileError('Please provide the transaction reference number.');
+      return;
+    }
+    if (!selectedFile) {
+      setFileError('Please attach your deposit slip or proof of payment.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(25);
+
+    try {
+      setTimeout(() => setUploadProgress(60), 200);
+      setTimeout(async () => {
+        setUploadProgress(100);
+        await paymentService.submitPaymentProof(
+          {
+            enrollmentId,
+            paymentMethod,
+            referenceNumber,
+            amount,
+            proofFileName: selectedFile.name,
+            proofFileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+          },
+          currentUser
+        );
+
+        setUploading(false);
+        setShowUploadModal(false);
+        setSelectedFile(null);
+        setReferenceNumber('');
+        setSuccessMessage('Payment proof submitted successfully! The Cashier office will verify your transaction.');
+        loadData();
+      }, 600);
+    } catch (err) {
+      setUploading(false);
+      setFileError('Failed to upload payment proof. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return <LoadingState message="Loading payment transactions..." />;
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Student Payments & Assessment"
+        subtitle="Submit payment slips and track official cashier verification status."
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/student/dashboard' },
+          { label: 'Payments', to: '/student/payments' }
+        ]}
+        actions={
+          <button className="btn btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
+            <i className="bi bi-cloud-arrow-up me-1"></i>Upload Payment Proof
+          </button>
+        }
+      />
+
+      {successMessage && (
+        <div className="alert alert-success alert-dismissible fade show small" role="alert">
+          <i className="bi bi-check-circle-fill me-2"></i>
+          {successMessage}
+          <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+        </div>
+      )}
+
+      {/* Bank & Payment Instructions Notice */}
+      <div className="pnc-card mb-4 bg-light border-success">
+        <div className="pnc-card-body">
+          <h6 className="fw-bold text-dark mb-2">
+            <i className="bi bi-bank2 text-success me-2"></i>Official University Payment Channels
+          </h6>
+          <div className="row g-3 small text-muted">
+            <div className="col-md-4">
+              <strong>Landbank of the Philippines (LBP)</strong>
+              <div>Account Name: Pamantasan ng Cabuyao</div>
+              <div>Account No: <strong>1422-1002-39</strong></div>
+            </div>
+            <div className="col-md-4">
+              <strong>GCash Official Merchant</strong>
+              <div>Merchant: Pamantasan ng Cabuyao</div>
+              <div>Account: <strong>0917-888-PNC1</strong></div>
+            </div>
+            <div className="col-md-4">
+              <strong>On-Campus Cashier</strong>
+              <div>Administration Bldg., Ground Floor</div>
+              <div>Mon - Fri, 8:00 AM - 4:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Payments History List */}
+      <div className="pnc-card">
+        <div className="pnc-card-header">
+          <span>Payment Transactions & Slips</span>
+        </div>
+        <div className="pnc-card-body p-0">
+          {payments.length === 0 ? (
+            <EmptyState
+              icon="bi-credit-card"
+              title="No Payment Records"
+              message="You have not submitted any payment slips yet."
+              action={
+                <button className="btn btn-sm btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
+                  Upload First Payment Slip
+                </button>
+              }
+            />
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover table-pnc align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Payment ID</th>
+                    <th>Enrollment Ref</th>
+                    <th>Amount</th>
+                    <th>Method & Ref No</th>
+                    <th>Date Submitted</th>
+                    <th>Status</th>
+                    <th>Verification Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="fw-bold font-monospace text-dark">{p.id}</td>
+                      <td><span className="badge bg-light text-dark border">{p.enrollmentId}</span></td>
+                      <td className="fw-bold text-success">₱{p.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td>
+                        <div className="fw-semibold text-dark small">{p.paymentMethod}</div>
+                        <div className="small text-muted font-monospace">{p.referenceNumber}</div>
+                      </td>
+                      <td className="small text-muted">{p.paymentDate}</td>
+                      <td><StatusBadge status={p.status} /></td>
+                      <td>
+                        {p.status === 'Verified' ? (
+                          <div className="small text-success">
+                            <div><i className="bi bi-check-circle me-1"></i>{p.verifiedBy}</div>
+                            <div className="text-muted" style={{ fontSize: '0.72rem' }}>{p.verifiedDate}</div>
+                            {p.remarks && <div className="text-muted fst-italic">{p.remarks}</div>}
+                          </div>
+                        ) : p.status === 'Rejected' ? (
+                          <div className="small text-danger">
+                            <div><i className="bi bi-x-circle me-1"></i>Rejected by Cashier</div>
+                            <div className="fst-italic">Reason: {p.remarks || 'Receipt illegible'}</div>
+                          </div>
+                        ) : (
+                          <span className="small text-muted">
+                            <i className="bi bi-hourglass-split me-1 text-warning"></i>Awaiting Cashier Review
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Upload Payment Modal */}
+      <Modal
+        isOpen={showUploadModal}
+        onClose={() => !uploading && setShowUploadModal(false)}
+        title="Upload Proof of Payment"
+        size="lg"
+      >
+        <form onSubmit={handleUploadSubmit}>
+          {fileError && (
+            <div className="alert alert-danger small py-2 px-3 mb-3" role="alert">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              {fileError}
+            </div>
+          )}
+
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label className="form-label small fw-semibold text-dark">Enrollment Reference</label>
+              <select
+                className="form-select form-select-sm"
+                value={enrollmentId}
+                onChange={(e) => setEnrollmentId(e.target.value)}
+                required
+              >
+                {enrollments.map((enr) => (
+                  <option key={enr.id} value={enr.id}>
+                    {enr.id} - {enr.term} (₱{enr.fees?.total?.toLocaleString()})
+                  </option>
+                ))}
+                {enrollments.length === 0 && <option value="ENR-2026-001">ENR-2026-001 (Current Term)</option>}
+              </select>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label small fw-semibold text-dark">Payment Amount (₱)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-control form-control-sm"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label className="form-label small fw-semibold text-dark">Payment Channel / Method</label>
+              <select
+                className="form-select form-select-sm"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                <option>Landbank of the Philippines (LBP)</option>
+                <option>GCash e-Wallet</option>
+                <option>Bank of the Philippine Islands (BPI)</option>
+                <option>On-Campus Over-the-Counter Cashier</option>
+              </select>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label small fw-semibold text-dark">
+                Transaction / Reference Number <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control form-control-sm"
+                placeholder="e.g. LBP-9823194 or GCASH-839201"
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label small fw-semibold text-dark">
+              Attach Receipt / Deposit Slip (JPG, PNG, PDF max 5MB) <span className="text-danger">*</span>
+            </label>
+            <input
+              type="file"
+              className="form-control form-control-sm"
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={handleFileChange}
+              required
+              disabled={uploading}
+            />
+            {selectedFile && (
+              <div className="small text-muted mt-1">
+                Selected file: <strong>{selectedFile.name}</strong> ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </div>
+            )}
+          </div>
+
+          {uploading && (
+            <div className="mb-3">
+              <div className="d-flex justify-content-between small text-muted mb-1">
+                <span>Uploading and hashing receipt...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="progress" style={{ height: '8px' }}>
+                <div
+                  className="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                  role="progressbar"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          <div className="d-flex justify-content-end gap-2 pt-3 border-top">
+            <button
+              type="button"
+              className="btn btn-sm btn-light"
+              onClick={() => setShowUploadModal(false)}
+              disabled={uploading}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-sm btn-pnc-primary" disabled={uploading}>
+              {uploading ? 'Processing...' : 'Submit Payment Proof'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
