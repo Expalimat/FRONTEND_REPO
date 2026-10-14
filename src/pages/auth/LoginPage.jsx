@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { DEMO_ACCOUNTS, DEMO_PASSWORD } from '../../data/demoAccounts';
 
 export const LoginPage = () => {
-  const [username, setUsername] = useState('student');
-  const [password, setPassword] = useState(DEMO_PASSWORD);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -36,12 +35,6 @@ export const LoginPage = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const fillDemoAccount = (u) => {
-    setUsername(u.username);
-    setPassword(DEMO_PASSWORD);
-    setError('');
   };
 
   return (
@@ -96,9 +89,6 @@ export const LoginPage = () => {
               <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <label className="form-label small fw-semibold text-dark mb-0">Password</label>
-                  <span className="small text-muted" style={{ fontSize: '0.75rem' }}>
-                    Default: password123
-                  </span>
                 </div>
                 <div className="input-group">
                   <span className="input-group-text bg-light text-muted">
@@ -153,25 +143,6 @@ export const LoginPage = () => {
             </form>
           </div>
 
-          {/* Quick Demo Role Picker for Testing */}
-          <div className="card-footer bg-light p-3 border-top">
-            <div className="small fw-semibold text-muted mb-2 text-center">
-              <i className="bi bi-lightning-charge me-1"></i>Quick Demo Fill by Role:
-            </div>
-            <div className="d-flex flex-wrap gap-1 justify-content-center">
-              {DEMO_ACCOUNTS.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  className={`btn btn-xs btn-outline-secondary small py-1 px-2 ${username === u.username ? 'active bg-secondary text-white' : ''}`}
-                  onClick={() => fillDemoAccount(u)}
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  {u.role}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Footer info */}

@@ -43,7 +43,11 @@ export const EnrollmentRequestsPage = () => {
     if (!targetEnrollment || !actionType) return;
     setProcessing(true);
     try {
-      const status = actionType === 'Approve' ? 'Approved' : 'Rejected';
+      const status = actionType === 'Approve'
+        ? 'Approved'
+        : actionType === 'Pre-Assess'
+          ? 'Pre-Assessed'
+          : 'Rejected';
       await enrollmentService.updateEnrollmentStatus(
         targetEnrollment.id,
         status,
@@ -122,6 +126,13 @@ export const EnrollmentRequestsPage = () => {
                 <i className="bi bi-check-lg me-1"></i>Approve
               </button>
               <button
+                className="btn btn-xs btn-outline-primary py-1 px-2"
+                onClick={() => handleOpenAction(row, 'Pre-Assess')}
+                title="Pre-Assess Application"
+              >
+                <i className="bi bi-clipboard-check me-1"></i>Pre-Assess
+              </button>
+              <button
                 className="btn btn-xs btn-danger py-1 px-2"
                 onClick={() => handleOpenAction(row, 'Reject')}
                 title="Reject Application"
@@ -165,6 +176,7 @@ export const EnrollmentRequestsPage = () => {
             filterField="status"
             filterOptions={[
               { label: 'Pending Approval', value: 'Pending' },
+              { label: 'Pre-Assessed', value: 'Pre-Assessed' },
               { label: 'Approved', value: 'Approved' },
               { label: 'Rejected', value: 'Rejected' }
             ]}
@@ -201,6 +213,12 @@ export const EnrollmentRequestsPage = () => {
                       onClick={() => handleOpenAction(selectedEnr, 'Approve')}
                     >
                       Approve Application
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => handleOpenAction(selectedEnr, 'Pre-Assess')}
+                    >
+                      Pre-Assess
                     </button>
                   </>
                 )}
@@ -270,10 +288,26 @@ export const EnrollmentRequestsPage = () => {
         isOpen={!!actionType}
         onClose={() => setActionType(null)}
         onConfirm={handleConfirmAction}
-        title={actionType === 'Approve' ? 'Approve Enrollment Submission' : 'Reject Enrollment Submission'}
-        message={`Are you sure you want to ${actionType?.toLowerCase()} the enrollment application of ${targetEnrollment?.studentName} (${targetEnrollment?.totalUnits} units)?`}
-        confirmText={actionType === 'Approve' ? 'Approve Enrollment' : 'Reject Enrollment'}
-        variant={actionType === 'Approve' ? 'primary' : 'danger'}
+        title={
+          actionType === 'Approve'
+            ? 'Approve Enrollment Submission'
+            : actionType === 'Pre-Assess'
+              ? 'Pre-Assess Enrollment Submission'
+              : 'Reject Enrollment Submission'
+        }
+        message={
+          actionType === 'Pre-Assess'
+            ? `Pre-assess the enrollment application of ${targetEnrollment?.studentName}? This will allow the student to submit proof of payment.`
+            : `Are you sure you want to ${actionType?.toLowerCase()} the enrollment application of ${targetEnrollment?.studentName} (${targetEnrollment?.totalUnits} units)?`
+        }
+        confirmText={
+          actionType === 'Approve'
+            ? 'Approve Enrollment'
+            : actionType === 'Pre-Assess'
+              ? 'Mark as Pre-Assessed'
+              : 'Reject Enrollment'
+        }
+        variant={actionType === 'Approve' ? 'primary' : actionType === 'Pre-Assess' ? 'info' : 'danger'}
         requiresReason={actionType === 'Reject'}
         reasonPlaceholder="State reason for rejection (e.g., Unresolved prerequisite deficiency)..."
         loading={processing}

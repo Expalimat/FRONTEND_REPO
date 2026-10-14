@@ -11,6 +11,7 @@ import { paymentService } from '../../services/paymentService';
 import { clearanceService } from '../../services/clearanceService';
 import { documentService } from '../../services/documentService';
 import { gradeService } from '../../services/gradeService';
+import { isEnrollmentCompleted } from '../../services/enrollmentService';
 
 export const StudentDashboard = () => {
   const { currentUser } = useAuth();
@@ -52,7 +53,10 @@ export const StudentDashboard = () => {
     return <LoadingState message="Loading student dashboard..." />;
   }
 
-  const latestEnrollment = enrollments[0];
+  const latestEnrollmentRecord = enrollments[0];
+  const latestEnrollment = latestEnrollmentRecord && isEnrollmentCompleted(latestEnrollmentRecord, payments)
+    ? { ...latestEnrollmentRecord, status: 'Enrolled' }
+    : latestEnrollmentRecord;
   const latestPayment = payments[0];
   const pendingDocsCount = documentRequests.filter((d) => d.status !== 'Released' && d.status !== 'Rejected').length;
 

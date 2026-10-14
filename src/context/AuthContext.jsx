@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
-import { DEMO_PASSWORD } from '../data/demoAccounts';
 
 const AuthContext = createContext(null);
 
@@ -32,14 +31,8 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
-  // Demo helper: really logs in as one of the seeded demo accounts
-  const switchMockUser = async (userObj) => {
-    authService.logout();
-    return login(userObj.username, DEMO_PASSWORD);
-  };
-
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout, switchMockUser, loading }}>
+    <AuthContext.Provider value={{ currentUser, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

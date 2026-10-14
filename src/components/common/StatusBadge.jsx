@@ -16,6 +16,11 @@ const STATUS_CONFIG = {
     icon: 'bi-check-circle-fill',
     text: 'Approved'
   },
+  'Pre-Assessed': {
+    bgClass: 'status-badge-approved',
+    icon: 'bi-clipboard-check',
+    text: 'Pre-Assessed'
+  },
   Verified: {
     bgClass: 'status-badge-verified',
     icon: 'bi-patch-check-fill',
@@ -45,6 +50,11 @@ const STATUS_CONFIG = {
     bgClass: 'status-badge-confirmed',
     icon: 'bi-check2-all',
     text: 'Confirmed'
+  },
+  Enrolled: {
+    bgClass: 'status-badge-confirmed',
+    icon: 'bi-check2-all',
+    text: 'Enrolled'
   },
   Active: {
     bgClass: 'status-badge-approved',

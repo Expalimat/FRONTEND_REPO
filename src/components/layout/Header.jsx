@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { DEMO_ACCOUNTS } from '../../data/demoAccounts';
 
 export const Header = ({ onToggleSidebar }) => {
-  const { currentUser, logout, switchMockUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -17,22 +15,9 @@ export const Header = ({ onToggleSidebar }) => {
     navigate('/login');
   };
 
-  const handleRoleSwitch = async (user) => {
-    setShowRoleSwitcher(false);
-    try {
-      await switchMockUser(user);
-    } catch (err) {
-      alert(err.message || 'Could not switch role.');
-      return;
-    }
-    const rolePaths = {
-      Student: '/student/dashboard',
-      Registrar: '/registrar/dashboard',
-      Cashier: '/cashier/dashboard',
-      'Department Staff': '/department/dashboard',
-      Administrator: '/admin/dashboard'
-    };
-    navigate(rolePaths[user.role] || '/login');
+  const handleSwitchAccount = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -56,45 +41,15 @@ export const Header = ({ onToggleSidebar }) => {
       </div>
 
       <div className="header-right">
-        {/* Role Quick-Switch Demo Utility */}
-        <div className="position-relative">
+        {/* Sign out before switching to another account */}
           <button
             className="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
-            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-            title="Quickly preview another user role"
+            onClick={handleSwitchAccount}
+            title="Sign out and log in with another account"
           >
             <i className="bi bi-arrow-left-right"></i>
-            <span className="d-none d-sm-inline">Switch Role Demo</span>
+            <span className="d-none d-sm-inline">Switch Account</span>
           </button>
-
-          {showRoleSwitcher && (
-            <div
-              className="position-absolute end-0 mt-2 p-2 bg-white shadow-lg rounded border"
-              style={{ width: '240px', zIndex: 1050 }}
-            >
-              <div className="small fw-bold text-muted px-2 py-1 border-bottom mb-1">
-                Switch Active Role:
-              </div>
-              {DEMO_ACCOUNTS.map((u) => (
-                <button
-                  key={u.id}
-                  className={`btn btn-sm w-100 text-start d-flex align-items-center gap-2 mb-1 ${
-                    currentUser?.id === u.id ? 'btn-success text-white' : 'btn-light'
-                  }`}
-                  onClick={() => handleRoleSwitch(u)}
-                >
-                  <span className="badge bg-secondary">{u.role.substring(0, 3)}</span>
-                  <div className="small text-truncate">
-                    <div className="fw-semibold">{u.role}</div>
-                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>
-                      {u.name}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Notification Bell Dropdown */}
         <div className="position-relative">

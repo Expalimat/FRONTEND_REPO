@@ -1,39 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { LoadingState } from '../../components/feedback/LoadingState';
-import { enrollmentService } from '../../services/enrollmentService';
+import { paymentService } from '../../services/paymentService';
+import {
+  enrollmentService,
+  isEnrollmentCompleted,
+  isEnrollmentActive,
+  isEnrollmentPaymentEligible
+} from '../../services/enrollmentService';
 
 export const EnrollmentPage = () => {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [terms, setTerms] = useState([]);
-  const [selectedTerm, setSelectedTerm] = useState('2nd Semester 2025-2026');
+  const [selectedTerm, setSelectedTerm] = useState('');
   const [offerings, setOfferings] = useState([]);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [existingEnrollments, setExistingEnrollments] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [completedNotice, setCompletedNotice] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedEnrollment, setSubmittedEnrollment] = useState(null);
   const [conflictWarning, setConflictWarning] = useState('');
+  const [refreshingStatus, setRefreshingStatus] = useState(false);
+  const [statusRefreshError, setStatusRefreshError] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [termList, subjectList, studentEnr] = await Promise.all([
+        const studentNumber = currentUser?.studentNumber || '2026-00001';
+        const [termList, subjectList, studentEnr, studentPayments] = await Promise.all([
           enrollmentService.getTerms(),
           enrollmentService.getOfferings(),
-          enrollmentService.getEnrollmentByStudent(currentUser?.studentNumber || '2026-00001')
+          enrollmentService.getEnrollmentByStudent(studentNumber),
+          paymentService.getPaymentsByStudent(studentNumber)
         ]);
         setTerms(termList);
         setOfferings(subjectList);
         setExistingEnrollments(studentEnr);
+        setPayments(studentPayments);
+        const currentTerm = termList.find((term) => term.isCurrent) || termList.find((term) => term.status === 'Open');
+        const termName = currentTerm ? `${currentTerm.semester} ${currentTerm.academicYear}` : '2nd Semester 2025-2026';
+        setSelectedTerm(termName);
+        const activeEnrollment = studentEnr.find(
+          (enrollment) =>
+            enrollment.term === termName &&
+            isEnrollmentActive(enrollment) &&
+            !isEnrollmentCompleted(enrollment, studentPayments)
+        );
+        if (activeEnrollment) {
+          setSubmittedEnrollment(activeEnrollment);
+          setCurrentStep(5);
+        } else {
+          const lastCompletedEnrollment = studentEnr.find(
+            (enrollment) => enrollment.term === termName && isEnrollmentCompleted(enrollment, studentPayments)
+          );
+          setCompletedNotice(lastCompletedEnrollment || null);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -47,8 +77,20 @@ export const EnrollmentPage = () => {
     return <LoadingState message="Loading enrollment modules and subject offerings..." />;
   }
 
+  const enrolledSubjectCodes = new Set(
+    existingEnrollments
+      .filter((enrollment) => enrollment.term === selectedTerm && isEnrollmentCompleted(enrollment, payments))
+      .flatMap((enrollment) => (enrollment.items || []).map((item) => item.subjectCode?.trim().toUpperCase()))
+      .filter(Boolean)
+  );
+
   const handleToggleSubject = (subject) => {
     setConflictWarning('');
+    if (enrolledSubjectCodes.has(subject.subjectCode?.trim().toUpperCase())) {
+      setConflictWarning(`${subject.subjectCode} is already enrolled for ${selectedTerm}.`);
+      return;
+    }
+
     const exists = selectedSubjects.some((s) => s.id === subject.id);
     if (exists) {
       setSelectedSubjects(selectedSubjects.filter((s) => s.id !== subject.id));
@@ -59,12 +101,6 @@ export const EnrollmentPage = () => {
     const sameCode = selectedSubjects.find((s) => s.subjectCode === subject.subjectCode);
     if (sameCode) {
       setConflictWarning(`You already selected section ${sameCode.section} for ${subject.subjectCode}.`);
-      return;
-    }
-
-    // Prerequisite check
-    if (subject.isPrerequisiteSatisfied === false) {
-      setConflictWarning(`Cannot select ${subject.subjectCode}: Prerequisite not satisfied (${subject.prerequisites}).`);
       return;
     }
 
@@ -84,6 +120,18 @@ export const EnrollmentPage = () => {
   const totalFee = tuitionFee + miscFee + labFee;
 
   const handleFinalSubmit = async () => {
+    const existingActiveEnrollment = existingEnrollments.find(
+      (enrollment) =>
+        enrollment.term === selectedTerm &&
+        isEnrollmentActive(enrollment) &&
+        !isEnrollmentCompleted(enrollment, payments)
+    );
+    if (existingActiveEnrollment) {
+      setSubmittedEnrollment(existingActiveEnrollment);
+      setCurrentStep(5);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const newEnrollment = await enrollmentService.submitEnrollment(
@@ -108,6 +156,7 @@ export const EnrollmentPage = () => {
         currentUser
       );
       setSubmittedEnrollment(newEnrollment);
+      setExistingEnrollments((current) => [newEnrollment, ...current]);
       setShowConfirmModal(false);
       setCurrentStep(5);
     } catch (err) {
@@ -117,13 +166,68 @@ export const EnrollmentPage = () => {
     }
   };
 
+  const refreshSubmittedStatus = async () => {
+    if (!submittedEnrollment) return;
+    setRefreshingStatus(true);
+    setStatusRefreshError('');
+    try {
+      const studentNumber = currentUser?.studentNumber || '2026-00001';
+      const [studentEnrollments, studentPayments] = await Promise.all([
+        enrollmentService.getEnrollmentByStudent(studentNumber),
+        paymentService.getPaymentsByStudent(studentNumber)
+      ]);
+      const latestEnrollment = studentEnrollments.find((enrollment) => enrollment.id === submittedEnrollment.id);
+      if (!latestEnrollment) {
+        throw new Error('Could not find this enrollment application. Please try again.');
+      }
+      setSubmittedEnrollment(latestEnrollment);
+      setExistingEnrollments((current) => current.map((enrollment) =>
+        enrollment.id === latestEnrollment.id ? latestEnrollment : enrollment
+      ));
+      setPayments(studentPayments);
+      if (isEnrollmentCompleted(latestEnrollment, studentPayments)) {
+        setCompletedNotice(latestEnrollment);
+        setSubmittedEnrollment(null);
+        setSelectedSubjects([]);
+        setCurrentStep(1);
+      }
+    } catch (err) {
+      setStatusRefreshError(err.message || 'Could not refresh your enrollment status.');
+    } finally {
+      setRefreshingStatus(false);
+    }
+  };
+
   // If user completed enrollment successfully
   if (currentStep === 5 && submittedEnrollment) {
+    const paymentEligible = isEnrollmentPaymentEligible(submittedEnrollment);
+    const enrollmentStatus = submittedEnrollment.status || 'Pending';
+    const reviewRejected = enrollmentStatus.toLowerCase() === 'rejected';
+    const reviewPreAssessed = enrollmentStatus.toLowerCase().replace(/[\s_-]/g, '') === 'preassessed';
+    const submittedPayment = payments.find((payment) => payment.enrollmentId === submittedEnrollment.id);
+    const subjectStatus = reviewRejected
+      ? 'Rejected'
+      : !paymentEligible
+        ? 'Awaiting Registrar Review'
+        : submittedPayment?.status?.toLowerCase() === 'verified'
+          ? 'Payment Verified'
+          : submittedPayment
+            ? 'Awaiting Cashier Verification'
+            : 'Payment Required';
+
     return (
       <div>
         <PageHeader
           title="Enrollment Submitted Successfully"
-          subtitle="Your online enrollment application is now awaiting Registrar approval."
+          subtitle={
+            paymentEligible
+              ? reviewPreAssessed
+                ? 'The Registrar has pre-assessed your enrollment. You may now submit your proof of payment.'
+                : 'Your enrollment has been approved. You may now submit your proof of payment.'
+                : reviewRejected
+                  ? 'The Registrar did not approve this enrollment application. Review the remarks and contact the Registrar for next steps.'
+                  : 'Your online enrollment application is awaiting Registrar review.'
+          }
           breadcrumbs={[
             { label: 'Dashboard', to: '/student/dashboard' },
             { label: 'Enrollment', to: '/student/enrollment' }
@@ -139,7 +243,16 @@ export const EnrollmentPage = () => {
             </div>
             <h3 className="fw-bold text-dark mb-2">Enrollment Reference: {submittedEnrollment.id}</h3>
             <div className="mb-3">
-              <StatusBadge status="Pending" customLabel="Status: Pending Registrar Approval" />
+              <StatusBadge
+                status={enrollmentStatus}
+                customLabel={
+                  paymentEligible
+                    ? `Status: ${enrollmentStatus} - Ready for Payment`
+                      : reviewRejected
+                        ? `Status: ${enrollmentStatus}`
+                        : `Status: ${enrollmentStatus} - Registrar Review`
+                }
+              />
             </div>
             <p className="text-muted mx-auto mb-4" style={{ maxWidth: '540px' }}>
               Thank you, <strong>{currentUser?.name}</strong>! Your subject selection for{' '}
@@ -148,25 +261,112 @@ export const EnrollmentPage = () => {
 
             <div className="card bg-light border p-4 text-start mx-auto mb-4" style={{ maxWidth: '600px' }}>
               <h6 className="fw-bold text-dark mb-3">
-                <i className="bi bi-info-circle-fill text-success me-2"></i>Next Steps & Payment Instructions
+                <i className="bi bi-info-circle-fill text-success me-2"></i>
+                {paymentEligible ? 'Next Steps' : reviewRejected ? 'Registrar Review Result' : 'Waiting for Registrar Review'}
               </h6>
               <ol className="small text-muted mb-0 ps-3 d-flex flex-column gap-2">
-                <li>The University Registrar will review your academic prerequisites and curriculum standing.</li>
-                <li>
-                  Once approved or pre-assessed, proceed to the <strong>Payments Module</strong> to submit proof of payment (Total Assessed: ₱{submittedEnrollment.fees.total.toLocaleString()}).
-                </li>
-                <li>Check your notifications for status updates and verification receipts.</li>
+                {paymentEligible ? (
+                  <>
+                    <li>Your academic prerequisites and curriculum standing have been reviewed.</li>
+                    <li>
+                      Submit your proof of payment through the <strong>Payments Module</strong> (Total Assessed: ₱{submittedEnrollment.fees.total.toLocaleString()}).
+                    </li>
+                    <li>Check your notifications for status updates and verification receipts.</li>
+                  </>
+                ) : reviewRejected ? (
+                  <>
+                    <li>The Registrar did not approve this enrollment after reviewing your academic prerequisites and curriculum standing.</li>
+                    <li>{submittedEnrollment.remarks || 'Contact the Registrar to discuss the review result and next steps.'}</li>
+                    <li>Payment proof submission remains unavailable for this application.</li>
+                  </>
+                ) : (
+                  <>
+                    <li>The University Registrar will review your academic prerequisites and curriculum standing before payment.</li>
+                    <li>You can submit proof of payment in the Payments Module after your enrollment is approved or pre-assessed.</li>
+                    <li>Check your notifications or refresh this page to see when the review is complete.</li>
+                  </>
+                )}
               </ol>
             </div>
+
+            {statusRefreshError && (
+              <div className="alert alert-danger small mx-auto mb-3" style={{ maxWidth: '600px' }} role="alert">
+                {statusRefreshError}
+              </div>
+            )}
 
             <div className="d-flex justify-content-center gap-2">
               <Link to="/student/dashboard" className="btn btn-outline-secondary">
                 <i className="bi bi-arrow-left me-1"></i>Back to Dashboard
               </Link>
-              <Link to="/student/payments" className="btn btn-pnc-primary">
-                <i className="bi bi-credit-card me-1"></i>Go to Payments
-              </Link>
+              {paymentEligible ? (
+                <>
+                  <Link to="/student/payments" className="btn btn-pnc-primary">
+                    <i className="bi bi-credit-card me-1"></i>Go to Payments
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={refreshSubmittedStatus}
+                    disabled={refreshingStatus}
+                  >
+                    <i className={`bi ${refreshingStatus ? 'bi-arrow-repeat' : 'bi-arrow-clockwise'} me-1`}></i>
+                    {refreshingStatus ? 'Checking Status...' : 'Check Payment Status'}
+                  </button>
+                </>
+              ) : (
+                  reviewRejected ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={() => {
+                        setSubmittedEnrollment(null);
+                        setCurrentStep(1);
+                        setSelectedSubjects([]);
+                        setConflictWarning('');
+                      }}
+                    >
+                      <i className="bi bi-arrow-repeat me-1"></i>Start a New Enrollment
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={refreshSubmittedStatus}
+                      disabled={refreshingStatus}
+                    >
+                      <i className={`bi ${refreshingStatus ? 'bi-arrow-repeat' : 'bi-arrow-clockwise'} me-1`}></i>
+                      {refreshingStatus ? 'Checking Status...' : 'Check Review Status'}
+                    </button>
+                  )
+                )}
             </div>
+            {submittedEnrollment.items?.length > 0 && (
+                <div className="table-responsive mx-auto mt-4 text-start" style={{ maxWidth: '760px' }}>
+                  <table className="table table-sm table-bordered align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Selected Subject</th>
+                        <th>Section</th>
+                        <th>Application Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {submittedEnrollment.items.map((item, index) => (
+                        <tr key={`${item.subjectCode}-${index}`}>
+                          <td><strong>{item.subjectCode}</strong> — {item.subjectTitle}</td>
+                          <td>{item.section}</td>
+                          <td>
+                            <span className={`badge ${subjectStatus === 'Rejected' ? 'bg-danger' : subjectStatus === 'Payment Verified' ? 'bg-success' : 'bg-warning text-dark'}`}>
+                              {subjectStatus}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+            )}
           </div>
         </div>
       </div>
@@ -183,6 +383,18 @@ export const EnrollmentPage = () => {
           { label: 'Enrollment', to: '/student/enrollment' }
         ]}
       />
+
+      {completedNotice && (
+        <div className="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-3" role="status">
+          <div>
+            <strong><i className="bi bi-check-circle-fill me-2"></i>Enrollment completed.</strong>
+            {' '}Your verified enrollment is recorded. You may enroll in additional subjects, but completed subjects are unavailable for duplicate enrollment.
+          </div>
+          <Link to="/student/schedule" className="btn btn-sm btn-outline-success flex-shrink-0">
+            <i className="bi bi-calendar3 me-1"></i>View Schedule
+          </Link>
+        </div>
+      )}
 
       {/* Step Indicator */}
       <div className="stepper-nav my-3 px-2 px-md-5">
@@ -218,9 +430,9 @@ export const EnrollmentPage = () => {
               {terms.map((t) => (
                 <div key={t.id} className="col-md-6">
                   <div
-                    className={`p-4 rounded-3 border cursor-pointer ${selectedTerm.includes(t.semester) ? 'border-success bg-success-subtle' : 'bg-white'}`}
-                    onClick={() => setSelectedTerm(`${t.semester} ${t.academicYear}`)}
-                    style={{ cursor: 'pointer' }}
+                    className={`p-4 rounded-3 border ${selectedTerm === `${t.semester} ${t.academicYear}` ? 'border-success bg-success-subtle' : 'bg-white'} ${t.status !== 'Open' ? 'opacity-50' : ''}`}
+                    onClick={() => t.status === 'Open' && setSelectedTerm(`${t.semester} ${t.academicYear}`)}
+                    style={{ cursor: t.status === 'Open' ? 'pointer' : 'not-allowed' }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <h6 className="fw-bold text-dark mb-0">
@@ -236,7 +448,11 @@ export const EnrollmentPage = () => {
               ))}
             </div>
             <div className="d-flex justify-content-end">
-              <button className="btn btn-pnc-primary" onClick={() => setCurrentStep(2)}>
+              <button
+                className="btn btn-pnc-primary"
+                onClick={() => setCurrentStep(2)}
+                disabled={!terms.some((term) => term.status === 'Open' && selectedTerm === `${term.semester} ${term.academicYear}`)}
+              >
                 Proceed to Subject Selection <i className="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -278,18 +494,19 @@ export const EnrollmentPage = () => {
                 <tbody>
                   {offerings.map((offering) => {
                     const isSelected = selectedSubjects.some((s) => s.id === offering.id);
+                    const isAlreadyEnrolled = enrolledSubjectCodes.has(offering.subjectCode?.trim().toUpperCase());
                     const isFull = offering.availableSlots <= 0;
-                    const isPrereqInvalid = offering.isPrerequisiteSatisfied === false;
+                    const prerequisiteText = (offering.prerequisites || 'None').replace(/\s*\(Unsatisfied\)/i, '');
 
                     return (
-                      <tr key={offering.id} className={isSelected ? 'table-success-subtle' : ''}>
+                      <tr key={offering.id} className={isSelected ? 'table-success-subtle' : isAlreadyEnrolled ? 'table-light' : ''}>
                         <td>
                           <input
                             type="checkbox"
                             className="form-check-input"
                             checked={isSelected}
                             onChange={() => handleToggleSubject(offering)}
-                            disabled={isFull || isPrereqInvalid}
+                            disabled={isAlreadyEnrolled || isFull}
                           />
                         </td>
                         <td>
@@ -303,20 +520,16 @@ export const EnrollmentPage = () => {
                           <div className="small text-muted">{offering.room}</div>
                         </td>
                         <td>
-                          {isFull ? (
+                          {isAlreadyEnrolled ? (
+                            <span className="badge bg-success-subtle text-success border border-success-subtle">Already Enrolled</span>
+                          ) : isFull ? (
                             <StatusBadge status="Full" />
                           ) : (
                             <span className="small text-muted">{offering.availableSlots} / {offering.totalSlots} left</span>
                           )}
                         </td>
                         <td>
-                          {isPrereqInvalid ? (
-                            <span className="badge bg-danger-subtle text-danger border border-danger-subtle" title={offering.prerequisites}>
-                              <i className="bi bi-x-circle me-1"></i>Prereq Not Met
-                            </span>
-                          ) : (
-                            <span className="small text-muted">{offering.prerequisites || 'None'}</span>
-                          )}
+                          <span className="small text-muted">{prerequisiteText}</span>
                         </td>
                       </tr>
                     );

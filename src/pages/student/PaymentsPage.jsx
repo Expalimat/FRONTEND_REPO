@@ -6,7 +6,12 @@ import { Modal } from '../../components/feedback/Modal';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
 import { paymentService } from '../../services/paymentService';
-import { enrollmentService } from '../../services/enrollmentService';
+import {
+  enrollmentService,
+  isEnrollmentAwaitingRegistrar,
+  isEnrollmentCompleted,
+  isEnrollmentPaymentEligible
+} from '../../services/enrollmentService';
 
 export const PaymentsPage = () => {
   const { currentUser } = useAuth();
@@ -25,6 +30,10 @@ export const PaymentsPage = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [successMessage, setSuccessMessage] = useState('');
+  const paymentEligibleEnrollments = enrollments.filter(
+    (enrollment) => isEnrollmentPaymentEligible(enrollment) && !isEnrollmentCompleted(enrollment, payments)
+  );
+  const waitingRegistrarEnrollments = enrollments.filter(isEnrollmentAwaitingRegistrar);
 
   const loadData = async () => {
     setLoading(true);
@@ -36,9 +45,14 @@ export const PaymentsPage = () => {
       ]);
       setPayments(payList);
       setEnrollments(enrList);
-      if (enrList.length > 0) {
-        setEnrollmentId(enrList[0].id);
-        setAmount(enrList[0].fees?.total?.toString() || '6650.00');
+      const eligibleEnrollment =
+        enrList.find((enrollment) => enrollment.id === enrollmentId && isEnrollmentPaymentEligible(enrollment)) ||
+        enrList.find(isEnrollmentPaymentEligible);
+      if (eligibleEnrollment) {
+        setEnrollmentId(eligibleEnrollment.id);
+        setAmount(eligibleEnrollment.fees?.total?.toString() || '6650.00');
+      } else {
+        setEnrollmentId('');
       }
     } catch (err) {
       console.error(err);
@@ -73,6 +87,10 @@ export const PaymentsPage = () => {
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
+    if (!paymentEligibleEnrollments.some((enrollment) => enrollment.id === enrollmentId)) {
+      setFileError('Payment proof can only be submitted after the Registrar approves or pre-assesses your enrollment.');
+      return;
+    }
     if (!referenceNumber.trim()) {
       setFileError('Please provide the transaction reference number.');
       return;
@@ -86,31 +104,29 @@ export const PaymentsPage = () => {
     setUploadProgress(25);
 
     try {
-      setTimeout(() => setUploadProgress(60), 200);
-      setTimeout(async () => {
-        setUploadProgress(100);
-        await paymentService.submitPaymentProof(
-          {
-            enrollmentId,
-            paymentMethod,
-            referenceNumber,
-            amount,
-            proofFileName: selectedFile.name,
-            proofFileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
-          },
-          currentUser
-        );
+      setUploadProgress(60);
+      await paymentService.submitPaymentProof(
+        {
+          enrollmentId,
+          paymentMethod,
+          referenceNumber,
+          amount,
+          proofFileName: selectedFile.name,
+          proofFileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+        },
+        currentUser
+      );
 
-        setUploading(false);
-        setShowUploadModal(false);
-        setSelectedFile(null);
-        setReferenceNumber('');
-        setSuccessMessage('Payment proof submitted successfully! The Cashier office will verify your transaction.');
-        loadData();
-      }, 600);
+      setUploadProgress(100);
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      setReferenceNumber('');
+      setSuccessMessage('Payment proof submitted successfully! The Cashier office will verify your transaction.');
+      await loadData();
     } catch (err) {
+      setFileError(err.message || 'Failed to upload payment proof. Please try again.');
+    } finally {
       setUploading(false);
-      setFileError('Failed to upload payment proof. Please try again.');
     }
   };
 
@@ -128,9 +144,11 @@ export const PaymentsPage = () => {
           { label: 'Payments', to: '/student/payments' }
         ]}
         actions={
-          <button className="btn btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
-            <i className="bi bi-cloud-arrow-up me-1"></i>Upload Payment Proof
-          </button>
+          paymentEligibleEnrollments.length > 0 && (
+            <button className="btn btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
+              <i className="bi bi-cloud-arrow-up me-1"></i>Upload Payment Proof
+            </button>
+          )
         }
       />
 
@@ -142,31 +160,56 @@ export const PaymentsPage = () => {
         </div>
       )}
 
-      {/* Bank & Payment Instructions Notice */}
-      <div className="pnc-card mb-4 bg-light border-success">
-        <div className="pnc-card-body">
-          <h6 className="fw-bold text-dark mb-2">
-            <i className="bi bi-bank2 text-success me-2"></i>Official University Payment Channels
-          </h6>
-          <div className="row g-3 small text-muted">
-            <div className="col-md-4">
-              <strong>Landbank of the Philippines (LBP)</strong>
-              <div>Account Name: Pamantasan ng Cabuyao</div>
-              <div>Account No: <strong>1422-1002-39</strong></div>
-            </div>
-            <div className="col-md-4">
-              <strong>GCash Official Merchant</strong>
-              <div>Merchant: Pamantasan ng Cabuyao</div>
-              <div>Account: <strong>0917-888-PNC1</strong></div>
-            </div>
-            <div className="col-md-4">
-              <strong>On-Campus Cashier</strong>
-              <div>Administration Bldg., Ground Floor</div>
-              <div>Mon - Fri, 8:00 AM - 4:00 PM</div>
+      {paymentEligibleEnrollments.length > 0 && waitingRegistrarEnrollments.length > 0 && (
+        <div className="alert alert-info small" role="status">
+          <i className="bi bi-hourglass-split me-2"></i>
+          {waitingRegistrarEnrollments.length === 1
+            ? 'Another enrollment application is still waiting for Registrar review. Payment remains unavailable for that application.'
+            : `${waitingRegistrarEnrollments.length} enrollment applications are waiting for Registrar review. Payment remains unavailable for those applications.`}
+        </div>
+      )}
+
+      {paymentEligibleEnrollments.length === 0 ? (
+        <div className="alert alert-info d-flex justify-content-between align-items-center gap-3" role="status">
+          <div>
+            <i className="bi bi-hourglass-split me-2"></i>
+            {waitingRegistrarEnrollments.length > 0
+              ? 'Your enrollment is waiting for the Registrar to review your academic prerequisites and curriculum standing. Payment submission will unlock after approval or pre-assessment.'
+              : 'Payment submission is locked until the Registrar reviews your academic prerequisites and curriculum standing and approves or pre-assesses your enrollment.'}
+          </div>
+          <button type="button" className="btn btn-sm btn-outline-primary flex-shrink-0" onClick={loadData}>
+            <i className="bi bi-arrow-clockwise me-1"></i>Refresh Status
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Bank & Payment Instructions Notice */}
+          <div className="pnc-card mb-4 bg-light border-success">
+            <div className="pnc-card-body">
+              <h6 className="fw-bold text-dark mb-2">
+                <i className="bi bi-bank2 text-success me-2"></i>Official University Payment Channels
+              </h6>
+              <div className="row g-3 small text-muted">
+                <div className="col-md-4">
+                  <strong>Landbank of the Philippines (LBP)</strong>
+                  <div>Account Name: Pamantasan ng Cabuyao</div>
+                  <div>Account No: <strong>1422-1002-39</strong></div>
+                </div>
+                <div className="col-md-4">
+                  <strong>GCash Official Merchant</strong>
+                  <div>Merchant: Pamantasan ng Cabuyao</div>
+                  <div>Account: <strong>0917-888-PNC1</strong></div>
+                </div>
+                <div className="col-md-4">
+                  <strong>On-Campus Cashier</strong>
+                  <div>Administration Bldg., Ground Floor</div>
+                  <div>Mon - Fri, 8:00 AM - 4:00 PM</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Payments History List */}
       <div className="pnc-card">
@@ -180,9 +223,11 @@ export const PaymentsPage = () => {
               title="No Payment Records"
               message="You have not submitted any payment slips yet."
               action={
-                <button className="btn btn-sm btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
-                  Upload First Payment Slip
-                </button>
+                paymentEligibleEnrollments.length > 0 && (
+                  <button className="btn btn-sm btn-pnc-primary" onClick={() => setShowUploadModal(true)}>
+                    Upload First Payment Slip
+                  </button>
+                )
               }
             />
           ) : (
@@ -239,7 +284,7 @@ export const PaymentsPage = () => {
       </div>
 
       {/* Upload Payment Modal */}
-      <Modal
+      {paymentEligibleEnrollments.length > 0 && <Modal
         isOpen={showUploadModal}
         onClose={() => !uploading && setShowUploadModal(false)}
         title="Upload Proof of Payment"
@@ -259,15 +304,20 @@ export const PaymentsPage = () => {
               <select
                 className="form-select form-select-sm"
                 value={enrollmentId}
-                onChange={(e) => setEnrollmentId(e.target.value)}
+                onChange={(e) => {
+                  const selectedEnrollment = paymentEligibleEnrollments.find(
+                    (enrollment) => enrollment.id === e.target.value
+                  );
+                  setEnrollmentId(e.target.value);
+                  setAmount(selectedEnrollment?.fees?.total?.toString() || '6650.00');
+                }}
                 required
               >
-                {enrollments.map((enr) => (
+                {paymentEligibleEnrollments.map((enr) => (
                   <option key={enr.id} value={enr.id}>
                     {enr.id} - {enr.term} (₱{enr.fees?.total?.toLocaleString()})
                   </option>
                 ))}
-                {enrollments.length === 0 && <option value="ENR-2026-001">ENR-2026-001 (Current Term)</option>}
               </select>
             </div>
 
@@ -363,7 +413,7 @@ export const PaymentsPage = () => {
             </button>
           </div>
         </form>
-      </Modal>
+      </Modal>}
     </div>
   );
 };

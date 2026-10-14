@@ -1,5 +1,28 @@
 import api from './api';
 
+export const isEnrollmentPaymentEligible = (enrollment) => {
+  const status = enrollment?.status?.toLowerCase().replace(/[\s_-]/g, '');
+  return status === 'approved' || status === 'preassessed';
+};
+
+export const isEnrollmentCompleted = (enrollment, payments = []) => {
+  const status = enrollment?.status?.toLowerCase().replace(/[\s_-]/g, '');
+  return ['enrolled', 'completed', 'confirmed'].includes(status) ||
+    (isEnrollmentPaymentEligible(enrollment) && payments.some(
+      (payment) =>
+        payment.enrollmentId === enrollment?.id &&
+        payment.status?.toLowerCase() === 'verified'
+    ));
+};
+
+export const isEnrollmentAwaitingRegistrar = (enrollment) =>
+  enrollment?.status?.toLowerCase().replace(/[\s_-]/g, '') === 'pending';
+
+export const isEnrollmentActive = (enrollment) => {
+  const status = enrollment?.status?.toLowerCase().replace(/[\s_-]/g, '');
+  return ['pending', 'approved', 'preassessed'].includes(status);
+};
+
 export const enrollmentService = {
   getOfferings: async (term) => (await api.get('/offerings', { params: term ? { term } : {} })).data,
 

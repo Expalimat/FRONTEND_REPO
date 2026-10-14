@@ -3,12 +3,14 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
-import { enrollmentService } from '../../services/enrollmentService';
+import { enrollmentService, isEnrollmentCompleted } from '../../services/enrollmentService';
+import { paymentService } from '../../services/paymentService';
 
 export const SchedulePage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState('2nd Semester 2025-2026');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
 
@@ -16,10 +18,18 @@ export const SchedulePage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await enrollmentService.getEnrollmentByStudent(currentUser?.studentNumber || '2026-00001');
-        setEnrollments(data);
-        if (data.length > 0) {
-          setSelectedTerm(data[0].term);
+        const studentNumber = currentUser?.studentNumber || '2026-00001';
+        const [enrollmentData, paymentData] = await Promise.all([
+          enrollmentService.getEnrollmentByStudent(studentNumber),
+          paymentService.getPaymentsByStudent(studentNumber)
+        ]);
+        setEnrollments(enrollmentData);
+        setPayments(paymentData);
+        if (enrollmentData.length > 0) {
+          const latestCompleted = enrollmentData.find((enrollment) =>
+            isEnrollmentCompleted(enrollment, paymentData)
+          );
+          setSelectedTerm((latestCompleted || enrollmentData[0]).term);
         }
       } catch (err) {
         console.error(err);
@@ -34,8 +44,31 @@ export const SchedulePage = () => {
     return <LoadingState message="Loading class schedule..." />;
   }
 
-  const currentEnrollment = enrollments.find((e) => e.term === selectedTerm) || enrollments[0];
-  const scheduleItems = currentEnrollment ? currentEnrollment.items : [];
+  const termEnrollments = enrollments.filter(
+    (enrollment) => enrollment.term === selectedTerm && isEnrollmentCompleted(enrollment, payments)
+  );
+  const scheduleItems = [
+    ...new Map(
+      termEnrollments
+        .flatMap((enrollment) => enrollment.items || [])
+        .map((item) => [item.subjectCode?.trim().toUpperCase(), item])
+    ).values()
+  ];
+  const termUnits = scheduleItems.reduce((sum, item) => sum + Number(item.units || 0), 0);
+  const termOptions = [...new Set(enrollments.map((enrollment) => enrollment.term))].map((term) => {
+    const termRecords = enrollments.filter((enrollment) => enrollment.term === term);
+    const completedRecords = termRecords.filter((enrollment) => isEnrollmentCompleted(enrollment, payments));
+    const termItems = [...new Map(
+      completedRecords
+        .flatMap((enrollment) => enrollment.items || [])
+        .map((item) => [item.subjectCode?.trim().toUpperCase(), item])
+    ).values()];
+    return {
+      term,
+      totalUnits: termItems.reduce((sum, item) => sum + Number(item.units || 0), 0),
+      status: completedRecords.length > 0 ? 'Enrolled' : termRecords[0].status
+    };
+  });
 
   return (
     <div>
@@ -87,11 +120,13 @@ export const SchedulePage = () => {
                 value={selectedTerm}
                 onChange={(e) => setSelectedTerm(e.target.value)}
               >
-                {enrollments.map((enr) => (
-                  <option key={enr.id} value={enr.term}>
+                {termOptions.map((enr) => {
+                  return (
+                  <option key={enr.term} value={enr.term}>
                     {enr.term} ({enr.totalUnits} Units - {enr.status})
                   </option>
-                ))}
+                  );
+                })}
                 {enrollments.length === 0 && <option>2nd Semester 2025-2026</option>}
               </select>
             </div>
@@ -103,7 +138,7 @@ export const SchedulePage = () => {
         <EmptyState
           icon="bi-calendar-x"
           title="No Schedule Available"
-          message="There are no confirmed class schedules found for the selected academic term."
+          message="Your official schedule will appear after the Registrar approves your enrollment and the Cashier verifies your payment."
         />
       ) : viewMode === 'table' ? (
         /* Table View */
@@ -111,7 +146,7 @@ export const SchedulePage = () => {
           <div className="pnc-card-header d-flex justify-content-between align-items-center">
             <span className="fw-bold text-dark">Class Schedule ({selectedTerm})</span>
             <span className="badge bg-success-subtle text-success border border-success-subtle">
-              {scheduleItems.length} Subjects Enrolled
+              {scheduleItems.length} Subjects Enrolled ({termUnits} Units)
             </span>
           </div>
           <div className="pnc-card-body p-0">
