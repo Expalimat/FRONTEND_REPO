@@ -78,16 +78,16 @@ export const GradesPage = () => {
           </div>
         </div>
         <div className="col-md-5">
-          <div className="pnc-card h-100 mb-0 bg-light">
+          <div className="pnc-card h-100 mb-0 bg-success-subtle border-success-subtle">
             <div className="pnc-card-body d-flex align-items-center justify-content-between">
               <div>
-                <div className="small text-muted fw-bold">Term Grade Point Average (GPA)</div>
-                <div className="fs-3 fw-bold text-dark">{summary.gpa}</div>
+                <div className="small text-success fw-bold">Term Grade Point Average (GPA)</div>
+                <div className="fs-3 fw-bold text-success">{summary.gpa}</div>
                 <div className="small text-muted" style={{ fontSize: '0.72rem' }}>
                   Computed from {summary.validatedCount} validated subject(s)
                 </div>
               </div>
-              <div className="rounded-circle bg-white text-secondary border p-3">
+              <div className="rounded-circle bg-success text-white p-3">
                 <i className="bi bi-award fs-3"></i>
               </div>
             </div>
@@ -96,8 +96,8 @@ export const GradesPage = () => {
       </div>
 
       {/* Dual Control Note */}
-      <div className="alert alert-secondary small d-flex align-items-center gap-2 mb-4" role="alert">
-        <i className="bi bi-info-circle-fill fs-5 text-secondary"></i>
+      <div className="alert alert-info small d-flex align-items-center gap-2 mb-4" role="alert">
+        <i className="bi bi-info-circle-fill fs-5 text-info"></i>
         <div>
           <strong>Dual-Control Policy:</strong> In accordance with university academic guidelines, grades encoded by faculty instructors only become official and visible once validated and posted by the University Registrar.
         </div>
@@ -138,7 +138,7 @@ export const GradesPage = () => {
                         <td><span className="fw-semibold">{g.units}</span></td>
                         <td>
                           {isValidated ? (
-                            <span className="badge bg-light text-dark border fs-6 fw-bold font-monospace px-3 py-1">
+                            <span className="badge bg-success fs-6 fw-bold font-monospace px-3 py-1">
                               {g.grade}
                             </span>
                           ) : (
