@@ -31,9 +31,9 @@
   --pnc-secondary-light: #fff8e1;
   --pnc-dark: #1e293b;
   --pnc-light: #f8fafc;
-  --pnc-sidebar-bg: #0d3822;
-  --pnc-sidebar-hover: #144e31;
-  --pnc-sidebar-active: #1e6b45;
+  --pnc-sidebar-bg: #153d32;
+  --pnc-sidebar-hover: #214b3e;
+  --pnc-sidebar-active: #e5f1eb;
   --pnc-card-bg: #ffffff;
   --pnc-border-color: #e2e8f0;
   --pnc-text-muted: #64748b;
@@ -137,7 +137,7 @@ body {
 }
 
 .sidebar-nav {
-  padding: 1rem 0.75rem;
+  padding: 1rem 0.65rem;
   flex-grow: 1;
   overflow-y: auto;
 }
@@ -156,32 +156,54 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-height: 42px;
   padding: 0.65rem 0.85rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: all 0.15s ease;
-  margin-bottom: 0.2rem;
+  transition: background-color 180ms ease, color 180ms ease, transform 140ms ease, box-shadow 180ms ease;
+  margin-bottom: 0.35rem;
 }
 
 .sidebar-link:hover {
   background-color: var(--pnc-sidebar-hover);
   color: #ffffff;
+  transform: translateX(3px);
 }
 
 .sidebar-link.active {
   background-color: var(--pnc-sidebar-active);
-  color: #ffffff;
+  color: #173d32;
   font-weight: 600;
-  border-left: 3.5px solid var(--pnc-secondary);
+  box-shadow: inset 3px 0 0 var(--pnc-secondary);
+}
+
+.sidebar-link:active {
+  transform: scale(0.97);
 }
 
 .sidebar-link i {
   font-size: 1.15rem;
   width: 20px;
   text-align: center;
+  color: rgba(255, 255, 255, 0.62);
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.sidebar-link:hover i {
+  color: var(--pnc-secondary);
+}
+
+.sidebar-link.active i {
+  color: #a77c12;
+  transform: scale(1.06);
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid #e5c96f;
+  outline-offset: 2px;
 }
 
 .sidebar-badge {
@@ -204,7 +226,8 @@ body {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,6 +252,13 @@ body {
 .sidebar-user-role {
   font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-link,
+  .sidebar-link i {
+    transition: none;
+  }
 }
 
 /* Main Content wrapper */
