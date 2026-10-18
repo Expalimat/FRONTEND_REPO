@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { RowActionMenu } from '../../components/common/RowActionMenu';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { documentService } from '../../services/documentService';
@@ -110,41 +111,40 @@ export const DocumentRequestsQueuePage = () => {
           >
             <i className="bi bi-eye"></i>
           </button>
-          {row.status === 'Pending' && (
-            <button
-              className="btn btn-xs btn-info text-white py-1 px-2"
-              onClick={() => {
-                setSelectedDoc(row);
-                setActionType('Processing');
-              }}
-              title="Mark as Processing"
-            >
-              Process
-            </button>
-          )}
           {(row.status === 'Pending' || row.status === 'Processing') && (
-            <>
-              <button
-                className="btn btn-xs btn-success py-1 px-2"
-                onClick={() => {
-                  setSelectedDoc(row);
-                  setActionType('Released');
-                }}
-                title="Release Document"
-              >
-                Release
-              </button>
-              <button
-                className="btn btn-xs btn-danger py-1 px-2"
-                onClick={() => {
-                  setSelectedDoc(row);
-                  setActionType('Rejected');
-                }}
-                title="Reject Request"
-              >
-                Reject
-              </button>
-            </>
+            <RowActionMenu
+              label={`Document request actions for ${row.trackingNumber}`}
+              actions={[
+                ...(row.status === 'Pending'
+                  ? [{
+                      label: 'Mark as Processing',
+                      icon: 'bi-arrow-repeat',
+                      onClick: () => {
+                        setSelectedDoc(row);
+                        setActionType('Processing');
+                      }
+                    }]
+                  : []),
+                {
+                  label: 'Release Document',
+                  icon: 'bi-check-lg',
+                  variant: 'text-success',
+                  onClick: () => {
+                    setSelectedDoc(row);
+                    setActionType('Released');
+                  }
+                },
+                {
+                  label: 'Reject Request',
+                  icon: 'bi-x-lg',
+                  variant: 'text-danger',
+                  onClick: () => {
+                    setSelectedDoc(row);
+                    setActionType('Rejected');
+                  }
+                }
+              ]}
+            />
           )}
         </div>
       )

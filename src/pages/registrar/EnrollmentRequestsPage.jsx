@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { RowActionMenu } from '../../components/common/RowActionMenu';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { enrollmentService } from '../../services/enrollmentService';
@@ -122,29 +123,28 @@ export const EnrollmentRequestsPage = () => {
             <i className="bi bi-eye me-1"></i>View
           </button>
           {row.status === 'Pending' && (
-            <>
-              <button
-                className="btn btn-xs btn-success py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Approve')}
-                title="Approve Application"
-              >
-                <i className="bi bi-check-lg me-1"></i>Approve
-              </button>
-              <button
-                className="btn btn-xs btn-outline-primary py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Pre-Assess')}
-                title="Pre-Assess Application"
-              >
-                <i className="bi bi-clipboard-check me-1"></i>Pre-Assess
-              </button>
-              <button
-                className="btn btn-xs btn-danger py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Reject')}
-                title="Reject Application"
-              >
-                <i className="bi bi-x-lg me-1"></i>Reject
-              </button>
-            </>
+            <RowActionMenu
+              label={`Enrollment actions for ${row.studentName}`}
+              actions={[
+                {
+                  label: 'Approve',
+                  icon: 'bi-check-lg',
+                  variant: 'text-success',
+                  onClick: () => handleOpenAction(row, 'Approve')
+                },
+                {
+                  label: 'Pre-Assess',
+                  icon: 'bi-clipboard-check',
+                  onClick: () => handleOpenAction(row, 'Pre-Assess')
+                },
+                {
+                  label: 'Reject',
+                  icon: 'bi-x-lg',
+                  variant: 'text-danger',
+                  onClick: () => handleOpenAction(row, 'Reject')
+                }
+              ]}
+            />
           )}
         </div>
       )
