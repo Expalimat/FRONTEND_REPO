@@ -24,7 +24,8 @@ export const isEnrollmentActive = (enrollment) => {
 };
 
 export const enrollmentService = {
-  getOfferings: async (term) => (await api.get('/offerings', { params: term ? { term } : {} })).data,
+  getOfferings: async (term, pagination) =>
+    (await api.get('/offerings', { params: { ...(term ? { term } : {}), ...pagination } })).data,
 
   getTerms: async () => (await api.get('/terms')).data,
 
@@ -33,10 +34,10 @@ export const enrollmentService = {
     return terms.find((t) => t.isCurrent) || terms[0];
   },
 
-  getEnrollments: async () => (await api.get('/enrollments')).data,
+  getEnrollments: async (params) => (await api.get('/enrollments', { params })).data,
 
-  getEnrollmentByStudent: async (studentNumber) =>
-    (await api.get('/enrollments', { params: { studentNumber } })).data,
+  getEnrollmentByStudent: async (studentNumber, pagination) =>
+    (await api.get('/enrollments', { params: { studentNumber, ...pagination } })).data,
 
   // student, name, program etc. come from the logged-in account on the server
   submitEnrollment: async (enrollmentData) => (await api.post('/enrollments', enrollmentData)).data,

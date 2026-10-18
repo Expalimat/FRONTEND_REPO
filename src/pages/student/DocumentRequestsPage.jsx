@@ -5,12 +5,15 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/feedback/Modal';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
+import { PaginationControls } from '../../components/tables/PaginationControls';
 import { documentService } from '../../services/documentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const DocumentRequestsPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showTrackModal, setShowTrackModal] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -22,11 +25,15 @@ export const DocumentRequestsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const loadRequests = async () => {
+  const loadRequests = async (page = 1) => {
     setLoading(true);
     try {
-      const list = await documentService.getRequestsByStudent(currentUser?.studentNumber || '2026-00001');
-      setRequests(list);
+      const result = readPage(await documentService.getRequestsByStudent(
+        currentUser?.studentNumber || '2026-00001',
+        pageParams(page)
+      ));
+      setRequests(result.data);
+      setPagination(result);
     } catch (err) {
       console.error(err);
     } finally {
@@ -184,6 +191,11 @@ export const DocumentRequestsPage = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {requests.length > 0 && (
+            <div className="px-3 pb-3">
+              <PaginationControls {...pagination} onPageChange={loadRequests} />
             </div>
           )}
         </div>

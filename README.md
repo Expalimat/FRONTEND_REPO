@@ -31,3 +31,8 @@ backend API to be running.
 
 The Laravel backend must be started separately. Its local URL is normally
 `http://127.0.0.1:8000`.
+
+Administrative and student list views request records a page at a time from
+the API. Search and status/role filters are sent to the backend with each page
+request; endpoints also retain their full-list response when called without
+pagination parameters.

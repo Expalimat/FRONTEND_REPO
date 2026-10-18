@@ -5,49 +5,44 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
 import { gradeService } from '../../services/gradeService';
+import { PaginationControls } from '../../components/tables/PaginationControls';
+import { pageParams, readPage } from '../../services/api';
 
 export const GradesPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [summary, setSummary] = useState({ validatedCount: 0, gpa: 'N/A' });
   const [selectedTerm, setSelectedTerm] = useState('2nd Semester 2025-2026');
 
+  const loadGrades = async (page = 1) => {
+    setLoading(true);
+    try {
+      const response = await gradeService.getGradesByStudent(
+        currentUser?.studentNumber || '2026-00001',
+        { ...pageParams(page), term: selectedTerm }
+      );
+      const result = readPage(response);
+      setGrades(result.data);
+      setPagination(result);
+      setSummary(response.summary || { validatedCount: 0, gpa: 'N/A' });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchGrades = async () => {
-      setLoading(true);
-      try {
-        const data = await gradeService.getGradesByStudent(currentUser?.studentNumber || '2026-00001');
-        setGrades(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGrades();
-  }, [currentUser]);
+    loadGrades();
+  }, [currentUser, selectedTerm]);
 
   if (loading) {
     return <LoadingState message="Loading student grades & academic standing..." />;
   }
 
-  // Filter by selected term
-  const termGrades = grades.filter((g) => g.term === selectedTerm);
-
-  // Calculate GPA for validated grades only
-  const validatedGrades = termGrades.filter((g) => g.status === 'Validated');
-  let totalGradePoints = 0;
-  let totalValidatedUnits = 0;
-
-  validatedGrades.forEach((g) => {
-    const numGrade = parseFloat(g.grade);
-    if (!isNaN(numGrade)) {
-      totalGradePoints += numGrade * g.units;
-      totalValidatedUnits += g.units;
-    }
-  });
-
-  const gpa = totalValidatedUnits > 0 ? (totalGradePoints / totalValidatedUnits).toFixed(2) : 'N/A';
+  const termGrades = grades;
 
   return (
     <div>
@@ -87,9 +82,9 @@ export const GradesPage = () => {
             <div className="pnc-card-body d-flex align-items-center justify-content-between">
               <div>
                 <div className="small text-success fw-bold">Term Grade Point Average (GPA)</div>
-                <div className="fs-3 fw-bold text-success">{gpa}</div>
+                <div className="fs-3 fw-bold text-success">{summary.gpa}</div>
                 <div className="small text-muted" style={{ fontSize: '0.72rem' }}>
-                  Computed from {validatedGrades.length} validated subject(s)
+                  Computed from {summary.validatedCount} validated subject(s)
                 </div>
               </div>
               <div className="rounded-circle bg-success text-white p-3">
@@ -151,6 +146,11 @@ export const GradesPage = () => {
                               <i className="bi bi-hourglass-split me-1 text-warning"></i>
                               Awaiting Registrar Validation
                             </span>
+                          )}
+                          {termGrades.length > 0 && (
+                            <div className="px-3 pb-3">
+                              <PaginationControls {...pagination} onPageChange={loadGrades} />
+                            </div>
                           )}
                         </td>
                         <td>

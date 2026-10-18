@@ -3,6 +3,23 @@ import axios from 'axios';
 export const TOKEN_KEY = 'pnc_token';
 export const USER_KEY = 'pnc_current_user';
 
+export const readPage = (response) => ({
+  data: response.data,
+  currentPage: response.current_page,
+  lastPage: response.last_page,
+  perPage: response.per_page,
+  total: response.total
+});
+
+export const pageParams = (page, filters = {}) => ({
+  page,
+  per_page: 10,
+  ...(filters.search ? { search: filters.search } : {}),
+  ...(filters.filterField && filters.filterValue
+    ? { filter_field: filters.filterField, filter_value: filters.filterValue }
+    : {})
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
   headers: { Accept: 'application/json' }

@@ -3,25 +3,31 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { RowActionMenu } from '../../components/common/RowActionMenu';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { documentService } from '../../services/documentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const DocumentRequestsQueuePage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Processing' | 'Released' | 'Rejected'
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
 
-  const loadRequests = async () => {
+  const loadRequests = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const list = await documentService.getRequests();
-      setRequests(list);
+      const result = readPage(await documentService.getRequests(pageParams(page, nextFilters)));
+      setRequests(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -105,41 +111,40 @@ export const DocumentRequestsQueuePage = () => {
           >
             <i className="bi bi-eye"></i>
           </button>
-          {row.status === 'Pending' && (
-            <button
-              className="btn btn-xs btn-info text-white py-1 px-2"
-              onClick={() => {
-                setSelectedDoc(row);
-                setActionType('Processing');
-              }}
-              title="Mark as Processing"
-            >
-              Process
-            </button>
-          )}
           {(row.status === 'Pending' || row.status === 'Processing') && (
-            <>
-              <button
-                className="btn btn-xs btn-success py-1 px-2"
-                onClick={() => {
-                  setSelectedDoc(row);
-                  setActionType('Released');
-                }}
-                title="Release Document"
-              >
-                Release
-              </button>
-              <button
-                className="btn btn-xs btn-danger py-1 px-2"
-                onClick={() => {
-                  setSelectedDoc(row);
-                  setActionType('Rejected');
-                }}
-                title="Reject Request"
-              >
-                Reject
-              </button>
-            </>
+            <RowActionMenu
+              label={`Document request actions for ${row.trackingNumber}`}
+              actions={[
+                ...(row.status === 'Pending'
+                  ? [{
+                      label: 'Mark as Processing',
+                      icon: 'bi-arrow-repeat',
+                      onClick: () => {
+                        setSelectedDoc(row);
+                        setActionType('Processing');
+                      }
+                    }]
+                  : []),
+                {
+                  label: 'Release Document',
+                  icon: 'bi-check-lg',
+                  variant: 'text-success',
+                  onClick: () => {
+                    setSelectedDoc(row);
+                    setActionType('Released');
+                  }
+                },
+                {
+                  label: 'Reject Request',
+                  icon: 'bi-x-lg',
+                  variant: 'text-danger',
+                  onClick: () => {
+                    setSelectedDoc(row);
+                    setActionType('Rejected');
+                  }
+                }
+              ]}
+            />
           )}
         </div>
       )
@@ -183,6 +188,7 @@ export const DocumentRequestsQueuePage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search by tracking number, student or document..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadRequests }}
           />
         </div>
       </div>

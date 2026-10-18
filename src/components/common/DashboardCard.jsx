@@ -12,11 +12,11 @@ export const DashboardCard = ({
 }) => {
   const colorMap = {
     primary: { bg: '#e8f5e9', color: '#0f5132' },
-    secondary: { bg: '#fff8e1', color: '#b8860b' },
-    info: { bg: '#e0f2fe', color: '#0369a1' },
-    warning: { bg: '#fef3c7', color: '#b45309' },
-    danger: { bg: '#fee2e2', color: '#b91c1c' },
-    purple: { bg: '#f3e8ff', color: '#6b21a8' }
+    secondary: { bg: '#fff8e1', color: '#8a6b12' },
+    info: { bg: '#e8f5e9', color: '#0f5132' },
+    warning: { bg: '#fff8e1', color: '#8a6b12' },
+    danger: { bg: '#e8f5e9', color: '#0f5132' },
+    purple: { bg: '#e8f5e9', color: '#0f5132' }
   };
 
   const currentTheme = colorMap[color] || colorMap.primary;

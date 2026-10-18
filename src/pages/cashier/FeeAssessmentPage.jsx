@@ -4,26 +4,32 @@ import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/feedback/Modal';
 import { enrollmentService } from '../../services/enrollmentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const FeeAssessmentPage = () => {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedEnr, setSelectedEnr] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  const loadEnrollments = async (page = 1, nextFilters = filters) => {
+    setLoading(true);
+    try {
+      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, nextFilters)));
+      setEnrollments(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const data = await enrollmentService.getEnrollments();
-        setEnrollments(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    loadEnrollments();
   }, []);
 
   const columns = [
@@ -103,6 +109,7 @@ export const FeeAssessmentPage = () => {
             data={enrollments}
             searchPlaceholder="Search student, enrollment ID or program..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
           />
         </div>
       </div>

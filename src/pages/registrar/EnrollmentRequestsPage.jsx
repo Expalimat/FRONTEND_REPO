@@ -3,14 +3,18 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { RowActionMenu } from '../../components/common/RowActionMenu';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { enrollmentService } from '../../services/enrollmentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const EnrollmentRequestsPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedEnr, setSelectedEnr] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [actionType, setActionType] = useState(null); // 'Approve' | 'Reject'
@@ -18,11 +22,13 @@ export const EnrollmentRequestsPage = () => {
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadEnrollments = async () => {
+  const loadEnrollments = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await enrollmentService.getEnrollments();
-      setEnrollments(data);
+      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, nextFilters)));
+      setEnrollments(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -117,29 +123,28 @@ export const EnrollmentRequestsPage = () => {
             <i className="bi bi-eye me-1"></i>View
           </button>
           {row.status === 'Pending' && (
-            <>
-              <button
-                className="btn btn-xs btn-success py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Approve')}
-                title="Approve Application"
-              >
-                <i className="bi bi-check-lg me-1"></i>Approve
-              </button>
-              <button
-                className="btn btn-xs btn-outline-primary py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Pre-Assess')}
-                title="Pre-Assess Application"
-              >
-                <i className="bi bi-clipboard-check me-1"></i>Pre-Assess
-              </button>
-              <button
-                className="btn btn-xs btn-danger py-1 px-2"
-                onClick={() => handleOpenAction(row, 'Reject')}
-                title="Reject Application"
-              >
-                <i className="bi bi-x-lg me-1"></i>Reject
-              </button>
-            </>
+            <RowActionMenu
+              label={`Enrollment actions for ${row.studentName}`}
+              actions={[
+                {
+                  label: 'Approve',
+                  icon: 'bi-check-lg',
+                  variant: 'text-success',
+                  onClick: () => handleOpenAction(row, 'Approve')
+                },
+                {
+                  label: 'Pre-Assess',
+                  icon: 'bi-clipboard-check',
+                  onClick: () => handleOpenAction(row, 'Pre-Assess')
+                },
+                {
+                  label: 'Reject',
+                  icon: 'bi-x-lg',
+                  variant: 'text-danger',
+                  onClick: () => handleOpenAction(row, 'Reject')
+                }
+              ]}
+            />
           )}
         </div>
       )
@@ -183,6 +188,7 @@ export const EnrollmentRequestsPage = () => {
             filterPlaceholder="Filter by Status"
             searchPlaceholder="Search by student name, ID or program..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
           />
         </div>
       </div>

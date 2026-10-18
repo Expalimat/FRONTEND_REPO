@@ -3,8 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { LoadingState } from '../../components/feedback/LoadingState';
+import { PaginationControls } from '../../components/tables/PaginationControls';
 import { gradeService } from '../../services/gradeService';
 import { studentService } from '../../services/studentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const GradeEncodingPage = () => {
   const { currentUser } = useAuth();
@@ -13,6 +15,7 @@ export const GradeEncodingPage = () => {
   const [selectedSection, setSelectedSection] = useState('BSIT 2A');
   const [selectedTerm, setSelectedTerm] = useState('2nd Semester 2025-2026');
   const [students, setStudents] = useState([]);
+  const [studentPagination, setStudentPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
   const [gradesMap, setGradesMap] = useState({});
   const [savedGrades, setSavedGrades] = useState([]);
   const [savingIndex, setSavingIndex] = useState(null);
@@ -21,22 +24,27 @@ export const GradeEncodingPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [stdList, grdList] = await Promise.all([
-        studentService.getAllStudents(),
+      const [studentResponse, grdList] = await Promise.all([
+        studentService.getAllStudents(pageParams(1)),
         gradeService.getGrades()
       ]);
+      const page = readPage(studentResponse);
+      const stdList = page.data;
       setStudents(stdList);
+      setStudentPagination(page);
       setSavedGrades(grdList);
 
       // Initialize inputs from existing records
-      const initialMap = {};
-      stdList.forEach((s) => {
-        const existing = grdList.find(
-          (g) => g.studentNumber === s.studentNumber && g.subjectCode === selectedSubject
-        );
-        initialMap[s.studentNumber] = existing ? existing.grade : '1.50';
-      });
-      setGradesMap(initialMap);
+      setGradesMap((current) => ({
+        ...current,
+        ...stdList.reduce((map, student) => {
+          const existing = grdList.find(
+            (grade) => grade.studentNumber === student.studentNumber && grade.subjectCode === selectedSubject
+          );
+          map[student.studentNumber] = existing ? existing.grade : '1.50';
+          return map;
+        }, {})
+      }));
     } catch (err) {
       console.error(err);
     } finally {
@@ -47,6 +55,29 @@ export const GradeEncodingPage = () => {
   useEffect(() => {
     loadData();
   }, [selectedSubject]);
+
+  const loadStudentPage = async (page = 1) => {
+    setLoading(true);
+    try {
+      const result = readPage(await studentService.getAllStudents(pageParams(page)));
+      setStudents(result.data);
+      setStudentPagination(result);
+      setGradesMap((current) => ({
+        ...current,
+        ...result.data.reduce((map, student) => {
+          const existing = savedGrades.find(
+            (grade) => grade.studentNumber === student.studentNumber && grade.subjectCode === selectedSubject
+          );
+          map[student.studentNumber] = existing ? existing.grade : '1.50';
+          return map;
+        }, {})
+      }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGradeChange = (studentNumber, val) => {
     setGradesMap({
@@ -157,7 +188,7 @@ export const GradeEncodingPage = () => {
       <div className="pnc-card">
         <div className="pnc-card-header d-flex justify-content-between align-items-center">
           <span>Class Roster & Grade Input ({selectedSubject} - {selectedSection})</span>
-          <span className="badge bg-light text-dark border">{students.length} Enrolled Students</span>
+          <span className="badge bg-light text-dark border">{studentPagination.total} Enrolled Students</span>
         </div>
         <div className="pnc-card-body p-0">
           <div className="table-responsive">
@@ -243,6 +274,9 @@ export const GradeEncodingPage = () => {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="px-3 pb-3">
+            <PaginationControls {...studentPagination} onPageChange={loadStudentPage} />
           </div>
         </div>
       </div>

@@ -6,11 +6,14 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/feedback/Modal';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { userService } from '../../services/userService';
+import { pageParams, readPage } from '../../services/api';
 
 export const UserManagementPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [targetId, setTargetId] = useState(null);
@@ -30,11 +33,13 @@ export const UserManagementPage = () => {
     department: ''
   });
 
-  const loadUsers = async () => {
+  const loadUsers = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await userService.getUsers();
-      setUsers(data);
+      const result = readPage(await userService.getUsers(pageParams(page, nextFilters)));
+      setUsers(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -230,6 +235,7 @@ export const UserManagementPage = () => {
             filterPlaceholder="Filter by Role"
             searchPlaceholder="Search name, username, email or ID..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadUsers }}
           />
         </div>
       </div>

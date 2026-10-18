@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { notificationService } from '../services/notificationService';
+import { pageParams } from '../services/api';
 import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
@@ -8,19 +9,22 @@ export const NotificationProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const refreshNotifications = async () => {
     if (currentUser) {
       try {
-        const list = await notificationService.getUserNotifications(currentUser.id);
-        setNotifications(list);
-        setUnreadCount(list.filter((n) => !n.isRead).length);
+        const page = await notificationService.getUserNotifications(pageParams(1));
+        setNotifications(page.data);
+        setUnreadCount(page.unreadCount ?? page.data.filter((n) => !n.isRead).length);
+        setTotalCount(page.total ?? page.data.length);
       } catch {
         // keep the old list if the request fails
       }
     } else {
       setNotifications([]);
       setUnreadCount(0);
+      setTotalCount(0);
     }
   };
 
@@ -42,7 +46,7 @@ export const NotificationProvider = ({ children }) => {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, refreshNotifications, markAsRead, markAllAsRead }}
+      value={{ notifications, unreadCount, totalCount, refreshNotifications, markAsRead, markAllAsRead }}
     >
       {children}
     </NotificationContext.Provider>
