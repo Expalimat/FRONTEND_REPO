@@ -31,9 +31,9 @@
   --pnc-secondary-light: #fff8e1;
   --pnc-dark: #1e293b;
   --pnc-light: #f8fafc;
-  --pnc-sidebar-bg: rgba(232, 245, 233, 0.88);
-  --pnc-sidebar-hover: rgba(15, 81, 50, 0.08);
-  --pnc-sidebar-active: rgba(15, 81, 50, 0.12);
+  --pnc-sidebar-bg: #153d32;
+  --pnc-sidebar-hover: #214b3e;
+  --pnc-sidebar-active: #e5f1eb;
   --pnc-card-bg: #ffffff;
   --pnc-border-color: #e2e8f0;
   --pnc-text-muted: #64748b;
@@ -82,7 +82,7 @@ body {
 .app-sidebar {
   width: var(--pnc-sidebar-width);
   background: var(--pnc-sidebar-bg);
-  color: #173d32;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -91,19 +91,17 @@ body {
   left: 0;
   z-index: 1040;
   transition: all 0.25s ease-in-out;
-  box-shadow: 2px 0 18px rgba(15, 81, 50, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-brand {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(15, 81, 50, 0.1);
+  border-bottom: 1px solid rgba(212, 160, 23, 0.3);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
-  color: #173d32;
+  color: #ffffff;
 }
 
 .sidebar-brand-icon {
@@ -134,7 +132,7 @@ body {
 
 .sidebar-brand-subtitle {
   font-size: 0.7rem;
-  color: #668076;
+  color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.3px;
 }
 
@@ -148,7 +146,7 @@ body {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #71877d;
+  color: #cbb66f;
   padding: 0.5rem 0.75rem;
   margin-top: 0.5rem;
   font-weight: 600;
@@ -160,7 +158,7 @@ body {
   gap: 0.75rem;
   min-height: 42px;
   padding: 0.65rem 0.85rem;
-  color: #3f6255;
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
   border-radius: 12px;
   font-size: 0.9rem;
@@ -171,13 +169,13 @@ body {
 
 .sidebar-link:hover {
   background-color: var(--pnc-sidebar-hover);
-  color: #0f5132;
+  color: #ffffff;
   transform: translateX(3px);
 }
 
 .sidebar-link.active {
   background-color: var(--pnc-sidebar-active);
-  color: #0f5132;
+  color: #173d32;
   font-weight: 600;
   box-shadow: inset 3px 0 0 var(--pnc-secondary), 0 2px 10px rgba(212, 160, 23, 0.08);
 }
@@ -190,7 +188,7 @@ body {
   font-size: 1.15rem;
   width: 20px;
   text-align: center;
-  color: #688578;
+  color: rgba(255, 255, 255, 0.62);
   transition: color 180ms ease, transform 180ms ease;
 }
 
@@ -222,8 +220,8 @@ body {
 
 .sidebar-user {
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(15, 81, 50, 0.1);
-  background: rgba(15, 81, 50, 0.035);
+  border-top: 1px solid rgba(212, 160, 23, 0.28);
+  background: rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -233,13 +231,13 @@ body {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(15, 81, 50, 0.08);
+  background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(212, 160, 23, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  color: #0f5132;
+  color: #ffffff;
 }
 
 .sidebar-user button {
@@ -266,12 +264,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #173d32;
+  color: #ffffff;
 }
 
 .sidebar-user-role {
   font-size: 0.7rem;
-  color: #71877d;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -296,6 +294,9 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 100vh;
+  background: rgba(232, 245, 233, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: all 0.25s ease-in-out;
 }
 
