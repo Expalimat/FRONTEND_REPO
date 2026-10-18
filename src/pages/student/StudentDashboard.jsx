@@ -121,43 +121,43 @@ export const StudentDashboard = () => {
       <div className="pnc-card mb-4">
         <div className="pnc-card-header">
           <span>
-            <i className="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions
+            <i className="bi bi-lightning-charge-fill text-secondary me-2"></i>Quick Actions
           </span>
         </div>
         <div className="pnc-card-body">
           <div className="row g-3">
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/enrollment" className="btn btn-outline-success w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/enrollment" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-journal-plus fs-3"></i>
                 <span className="small fw-semibold">Enroll Now</span>
               </Link>
             </div>
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/schedule" className="btn btn-outline-primary w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/schedule" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-calendar-week fs-3"></i>
                 <span className="small fw-semibold">View Schedule</span>
               </Link>
             </div>
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/payments" className="btn btn-outline-secondary w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/payments" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-cash-coin fs-3"></i>
                 <span className="small fw-semibold">View Payments</span>
               </Link>
             </div>
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/clearance" className="btn btn-outline-info w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/clearance" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-clipboard-check fs-3"></i>
                 <span className="small fw-semibold">Check Clearance</span>
               </Link>
             </div>
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/grades" className="btn btn-outline-dark w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/grades" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-mortarboard fs-3"></i>
                 <span className="small fw-semibold">View Grades</span>
               </Link>
             </div>
             <div className="col-6 col-md-4 col-lg-2">
-              <Link to="/student/documents" className="btn btn-outline-warning w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+              <Link to="/student/documents" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-file-earmark-arrow-up fs-3"></i>
                 <span className="small fw-semibold">Request Document</span>
               </Link>
