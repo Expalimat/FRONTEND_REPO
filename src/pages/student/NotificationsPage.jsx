@@ -1,16 +1,46 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { EmptyState } from '../../components/feedback/EmptyState';
+import { PaginationControls } from '../../components/tables/PaginationControls';
+import { LoadingState } from '../../components/feedback/LoadingState';
+import { notificationService } from '../../services/notificationService';
+import { pageParams, readPage } from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
 
 export const NotificationsPage = () => {
-  const { notifications, markAsRead, markAllAsRead } = useNotifications();
+  const { unreadCount, totalCount, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState('All'); // 'All' | 'Unread'
+  const [pageNotifications, setPageNotifications] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const filteredNotifications = notifications.filter((n) => {
-    if (filter === 'Unread') return !n.isRead;
-    return true;
-  });
+  const loadPage = async (page = 1, currentFilter = filter) => {
+    setLoading(true);
+    try {
+      const filters = currentFilter === 'Unread' ? { filterField: 'isRead', filterValue: '0' } : {};
+      const result = readPage(await notificationService.getUserNotifications(pageParams(page, filters)));
+      setPageNotifications(result.data);
+      setPagination(result);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPage(1, filter);
+  }, [filter]);
+
+  const handleMarkAsRead = async (id) => {
+    await markAsRead(id);
+    await loadPage(pagination.currentPage);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    await loadPage(1);
+  };
 
   return (
     <div>
@@ -22,7 +52,7 @@ export const NotificationsPage = () => {
           { label: 'Notifications', to: '/student/notifications' }
         ]}
         actions={
-          <button className="btn btn-sm btn-outline-success" onClick={markAllAsRead}>
+          <button className="btn btn-sm btn-outline-success" onClick={handleMarkAllAsRead}>
             <i className="bi bi-check2-all me-1"></i>Mark All as Read
           </button>
         }
@@ -34,19 +64,21 @@ export const NotificationsPage = () => {
           className={`btn btn-sm ${filter === 'All' ? 'btn-success' : 'btn-light border'}`}
           onClick={() => setFilter('All')}
         >
-          All ({notifications.length})
+          All ({totalCount})
         </button>
         <button
           className={`btn btn-sm ${filter === 'Unread' ? 'btn-success' : 'btn-light border'}`}
           onClick={() => setFilter('Unread')}
         >
-          Unread ({notifications.filter((n) => !n.isRead).length})
+          Unread ({unreadCount})
         </button>
       </div>
 
       <div className="pnc-card">
         <div className="pnc-card-body p-0">
-          {filteredNotifications.length === 0 ? (
+          {loading ? (
+            <LoadingState message="Loading notifications..." />
+          ) : pageNotifications.length === 0 ? (
             <EmptyState
               icon="bi-bell-slash"
               title="No notifications"
@@ -54,11 +86,11 @@ export const NotificationsPage = () => {
             />
           ) : (
             <div className="list-group list-group-flush">
-              {filteredNotifications.map((n) => (
+              {pageNotifications.map((n) => (
                 <div
                   key={n.id}
                   className={`list-group-item p-3 d-flex align-items-start gap-3 ${!n.isRead ? 'bg-light' : ''}`}
-                  onClick={() => markAsRead(n.id)}
+                  onClick={() => handleMarkAsRead(n.id)}
                   style={{ cursor: 'pointer' }}
                 >
                   <div
@@ -89,6 +121,11 @@ export const NotificationsPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {!loading && (
+            <div className="px-3 pb-3">
+              <PaginationControls {...pagination} onPageChange={(page) => loadPage(page)} />
             </div>
           )}
         </div>

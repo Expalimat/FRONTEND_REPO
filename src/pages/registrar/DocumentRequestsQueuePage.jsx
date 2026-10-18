@@ -6,22 +6,27 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { documentService } from '../../services/documentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const DocumentRequestsQueuePage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Processing' | 'Released' | 'Rejected'
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
 
-  const loadRequests = async () => {
+  const loadRequests = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const list = await documentService.getRequests();
-      setRequests(list);
+      const result = readPage(await documentService.getRequests(pageParams(page, nextFilters)));
+      setRequests(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -183,6 +188,7 @@ export const DocumentRequestsQueuePage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search by tracking number, student or document..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadRequests }}
           />
         </div>
       </div>

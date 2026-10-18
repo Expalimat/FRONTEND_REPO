@@ -6,28 +6,34 @@ import { Modal } from '../../components/feedback/Modal';
 import { studentService } from '../../services/studentService';
 import { enrollmentService } from '../../services/enrollmentService';
 import { gradeService } from '../../services/gradeService';
+import { pageParams, readPage } from '../../services/api';
 
 export const StudentRecordsPage = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentGrades, setStudentGrades] = useState([]);
   const [studentEnrollments, setStudentEnrollments] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
+  const loadStudents = async (page = 1, nextFilters = filters) => {
+    setLoading(true);
+    try {
+      const result = readPage(await studentService.getAllStudents(pageParams(page, nextFilters)));
+      setStudents(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const list = await studentService.getAllStudents();
-        setStudents(list);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadStudents();
   }, []);
 
   const handleViewStudent = async (student) => {
@@ -111,6 +117,7 @@ export const StudentRecordsPage = () => {
             data={students}
             searchPlaceholder="Search by name, student number or program..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadStudents }}
           />
         </div>
       </div>

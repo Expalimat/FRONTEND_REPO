@@ -6,11 +6,14 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { enrollmentService } from '../../services/enrollmentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const EnrollmentRequestsPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedEnr, setSelectedEnr] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [actionType, setActionType] = useState(null); // 'Approve' | 'Reject'
@@ -18,11 +21,13 @@ export const EnrollmentRequestsPage = () => {
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadEnrollments = async () => {
+  const loadEnrollments = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await enrollmentService.getEnrollments();
-      setEnrollments(data);
+      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, nextFilters)));
+      setEnrollments(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -183,6 +188,7 @@ export const EnrollmentRequestsPage = () => {
             filterPlaceholder="Filter by Status"
             searchPlaceholder="Search by student name, ID or program..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
           />
         </div>
       </div>

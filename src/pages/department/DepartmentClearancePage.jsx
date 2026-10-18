@@ -5,21 +5,26 @@ import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { clearanceService } from '../../services/clearanceService';
+import { pageParams, readPage } from '../../services/api';
 
 export const DepartmentClearancePage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [clearances, setClearances] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedClearance, setSelectedClearance] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Signed' | 'Rejected'
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadClearances = async () => {
+  const loadClearances = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await clearanceService.getClearances();
-      setClearances(data);
+      const result = readPage(await clearanceService.getClearances(pageParams(page, nextFilters)));
+      setClearances(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -150,6 +155,7 @@ export const DepartmentClearancePage = () => {
             data={clearances}
             searchPlaceholder="Search student name or ID..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadClearances }}
           />
         </div>
       </div>

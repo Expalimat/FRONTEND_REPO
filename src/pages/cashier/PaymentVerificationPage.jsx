@@ -6,22 +6,27 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { paymentService } from '../../services/paymentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const PaymentVerificationPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Verified' | 'Rejected'
   const [showSlipModal, setShowSlipModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadPayments = async () => {
+  const loadPayments = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await paymentService.getPayments();
-      setPayments(data);
+      const result = readPage(await paymentService.getPayments(pageParams(page, nextFilters)));
+      setPayments(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -184,6 +189,7 @@ export const PaymentVerificationPage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search by payment ID, student, reference number..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadPayments }}
           />
         </div>
       </div>

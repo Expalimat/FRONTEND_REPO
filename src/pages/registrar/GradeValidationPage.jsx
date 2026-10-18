@@ -5,21 +5,26 @@ import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { gradeService } from '../../services/gradeService';
+import { pageParams, readPage } from '../../services/api';
 
 export const GradeValidationPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedGrade, setSelectedGrade] = useState(null);
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadGrades = async () => {
+  const loadGrades = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const list = await gradeService.getGrades();
-      setGrades(list);
+      const result = readPage(await gradeService.getGrades(pageParams(page, nextFilters)));
+      setGrades(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -157,6 +162,7 @@ export const GradeValidationPage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search student, subject or instructor..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadGrades }}
           />
         </div>
       </div>

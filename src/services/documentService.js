@@ -1,10 +1,10 @@
 import api from './api';
 
 export const documentService = {
-  getRequests: async () => (await api.get('/document-requests')).data,
+  getRequests: async (params) => (await api.get('/document-requests', { params })).data,
 
-  getRequestsByStudent: async (studentNumber) =>
-    (await api.get('/document-requests', { params: { studentNumber } })).data,
+  getRequestsByStudent: async (studentNumber, pagination) =>
+    (await api.get('/document-requests', { params: { studentNumber, ...pagination } })).data,
 
   submitRequest: async (requestData) => (await api.post('/document-requests', requestData)).data,
 

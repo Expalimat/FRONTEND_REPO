@@ -1,10 +1,10 @@
 import api from './api';
 
 export const paymentService = {
-  getPayments: async () => (await api.get('/payments')).data,
+  getPayments: async (params) => (await api.get('/payments', { params })).data,
 
-  getPaymentsByStudent: async (studentNumber) =>
-    (await api.get('/payments', { params: { studentNumber } })).data,
+  getPaymentsByStudent: async (studentNumber, pagination) =>
+    (await api.get('/payments', { params: { studentNumber, ...pagination } })).data,
 
   submitPaymentProof: async (paymentData) => (await api.post('/payments', paymentData)).data,
 

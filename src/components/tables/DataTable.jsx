@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { EmptyState } from '../feedback/EmptyState';
 import { LoadingState } from '../feedback/LoadingState';
 
@@ -15,11 +15,24 @@ export const DataTable = ({
   emptyTitle = 'No records found',
   emptyMessage = 'No data is currently available.',
   keyField = 'id',
-  customCardRenderer // Optional for custom mobile rendering
+  customCardRenderer, // Optional for custom mobile rendering
+  serverPagination
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const searchTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+
+  const requestPage = (page, search = searchTerm, filter = filterValue) => {
+    serverPagination?.onPageChange(page, { search, filterField, filterValue: filter });
+  };
+
+  const scheduleSearch = (value) => {
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => requestPage(1, value), 250);
+  };
 
   // Filter and Search
   const filteredData = useMemo(() => {
@@ -43,17 +56,30 @@ export const DataTable = ({
   }, [data, searchTerm, filterField, filterValue]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const activePage = serverPagination?.currentPage || currentPage;
+  const totalRecords = serverPagination?.total ?? filteredData.length;
+  const totalPages = serverPagination?.lastPage || Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = useMemo(() => {
+    if (serverPagination) return filteredData;
     const start = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(start, start + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
+  }, [filteredData, currentPage, itemsPerPage, serverPagination]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      clearTimeout(searchTimer.current);
+      if (serverPagination) {
+        requestPage(newPage);
+      } else {
+        setCurrentPage(newPage);
+      }
     }
   };
+  const firstVisiblePage = Math.max(1, Math.min(activePage - 2, totalPages - 4));
+  const visiblePages = Array.from(
+    { length: Math.min(totalPages, 5) },
+    (_, index) => firstVisiblePage + index
+  );
 
   if (loading) {
     return <LoadingState message="Loading records..." />;
@@ -76,15 +102,22 @@ export const DataTable = ({
                   placeholder={searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => {
-                    setSearchTerm(e.target.value);
+                    const value = e.target.value;
+                    setSearchTerm(value);
                     setCurrentPage(1);
+                    scheduleSearch(value);
                   }}
                 />
                 {searchTerm && (
                   <button
                     className="btn btn-outline-secondary"
                     type="button"
-                    onClick={() => setSearchTerm('')}
+                    onClick={() => {
+                      clearTimeout(searchTimer.current);
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                      requestPage(1, '');
+                    }}
                   >
                     <i className="bi bi-x"></i>
                   </button>
@@ -99,8 +132,10 @@ export const DataTable = ({
                 className="form-select form-select-sm"
                 value={filterValue}
                 onChange={(e) => {
+                  clearTimeout(searchTimer.current);
                   setFilterValue(e.target.value);
                   setCurrentPage(1);
+                  requestPage(1, searchTerm, e.target.value);
                 }}
               >
                 <option value="">{filterPlaceholder}</option>
@@ -178,33 +213,33 @@ export const DataTable = ({
           {totalPages > 1 && (
             <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
               <div className="small text-muted">
-                Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to{' '}
-                <strong>{Math.min(currentPage * itemsPerPage, filteredData.length)}</strong> of{' '}
-                <strong>{filteredData.length}</strong> records
+                Showing <strong>{(activePage - 1) * (serverPagination?.perPage || itemsPerPage) + 1}</strong> to{' '}
+                <strong>{Math.min(activePage * (serverPagination?.perPage || itemsPerPage), totalRecords)}</strong> of{' '}
+                <strong>{totalRecords}</strong> records
               </div>
               <nav aria-label="Page navigation">
                 <ul className="pagination pagination-sm mb-0">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <li className={`page-item ${activePage === 1 ? 'disabled' : ''}`}>
                     <button
                       className="page-link"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(activePage - 1)}
+                      disabled={activePage === 1}
                     >
                       <i className="bi bi-chevron-left"></i>
                     </button>
                   </li>
-                  {[...Array(totalPages)].map((_, i) => (
-                    <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                        {i + 1}
+                  {visiblePages.map((pageNumber) => (
+                    <li key={pageNumber} className={`page-item ${activePage === pageNumber ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => handlePageChange(pageNumber)}>
+                        {pageNumber}
                       </button>
                     </li>
                   ))}
-                  <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <li className={`page-item ${activePage === totalPages ? 'disabled' : ''}`}>
                     <button
                       className="page-link"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(activePage + 1)}
+                      disabled={activePage === totalPages}
                     >
                       <i className="bi bi-chevron-right"></i>
                     </button>

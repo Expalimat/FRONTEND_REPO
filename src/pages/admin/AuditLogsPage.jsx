@@ -3,17 +3,22 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { Modal } from '../../components/feedback/Modal';
 import { auditService } from '../../services/auditService';
+import { pageParams, readPage } from '../../services/api';
 
 export const AuditLogsPage = () => {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [filters, setFilters] = useState({});
   const [selectedLog, setSelectedLog] = useState(null);
 
-  const loadLogs = async () => {
+  const loadLogs = async (page = 1, nextFilters = filters) => {
     setLoading(true);
     try {
-      const data = await auditService.getLogs();
-      setLogs(data);
+      const result = readPage(await auditService.getLogs(pageParams(page, nextFilters)));
+      setLogs(result.data);
+      setPagination(result);
+      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -129,6 +134,7 @@ export const AuditLogsPage = () => {
             filterPlaceholder="Filter Module"
             searchPlaceholder="Search user, action, log ID or details..."
             loading={loading}
+            serverPagination={{ ...pagination, onPageChange: loadLogs }}
           />
         </div>
       </div>

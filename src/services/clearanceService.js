@@ -1,7 +1,7 @@
 import api from './api';
 
 export const clearanceService = {
-  getClearances: async () => (await api.get('/clearances')).data,
+  getClearances: async (params) => (await api.get('/clearances', { params })).data,
 
   getClearanceByStudent: async (studentNumber) => {
     const { data } = await api.get('/clearances', { params: { studentNumber } });

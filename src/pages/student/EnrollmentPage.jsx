@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { LoadingState } from '../../components/feedback/LoadingState';
+import { PaginationControls } from '../../components/tables/PaginationControls';
 import { paymentService } from '../../services/paymentService';
 import {
   enrollmentService,
@@ -12,6 +13,7 @@ import {
   isEnrollmentActive,
   isEnrollmentPaymentEligible
 } from '../../services/enrollmentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const EnrollmentPage = () => {
   const { currentUser } = useAuth();
@@ -20,6 +22,8 @@ export const EnrollmentPage = () => {
   const [terms, setTerms] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState('');
   const [offerings, setOfferings] = useState([]);
+  const [offeringsPagination, setOfferingsPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [offeringsLoading, setOfferingsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [existingEnrollments, setExistingEnrollments] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -31,24 +35,34 @@ export const EnrollmentPage = () => {
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [statusRefreshError, setStatusRefreshError] = useState('');
 
+  const loadOfferingsPage = async (page = 1, term = selectedTerm) => {
+    setOfferingsLoading(true);
+    try {
+      const result = readPage(await enrollmentService.getOfferings(term, pageParams(page)));
+      setOfferings(result.data);
+      setOfferingsPagination(result);
+    } finally {
+      setOfferingsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
         const studentNumber = currentUser?.studentNumber || '2026-00001';
-        const [termList, subjectList, studentEnr, studentPayments] = await Promise.all([
+        const [termList, studentEnr, studentPayments] = await Promise.all([
           enrollmentService.getTerms(),
-          enrollmentService.getOfferings(),
           enrollmentService.getEnrollmentByStudent(studentNumber),
           paymentService.getPaymentsByStudent(studentNumber)
         ]);
         setTerms(termList);
-        setOfferings(subjectList);
         setExistingEnrollments(studentEnr);
         setPayments(studentPayments);
         const currentTerm = termList.find((term) => term.isCurrent) || termList.find((term) => term.status === 'Open');
         const termName = currentTerm ? `${currentTerm.semester} ${currentTerm.academicYear}` : '2nd Semester 2025-2026';
         setSelectedTerm(termName);
+        await loadOfferingsPage(1, termName);
         const activeEnrollment = studentEnr.find(
           (enrollment) =>
             enrollment.term === termName &&
@@ -431,7 +445,15 @@ export const EnrollmentPage = () => {
                 <div key={t.id} className="col-md-6">
                   <div
                     className={`p-4 rounded-3 border ${selectedTerm === `${t.semester} ${t.academicYear}` ? 'border-success bg-success-subtle' : 'bg-white'} ${t.status !== 'Open' ? 'opacity-50' : ''}`}
-                    onClick={() => t.status === 'Open' && setSelectedTerm(`${t.semester} ${t.academicYear}`)}
+                    onClick={() => {
+                      if (t.status === 'Open') {
+                        const termName = `${t.semester} ${t.academicYear}`;
+                        setSelectedTerm(termName);
+                        loadOfferingsPage(1, termName).catch((err) => {
+                          setConflictWarning(err.message || 'Could not load subject offerings. Please try again.');
+                        });
+                      }
+                    }}
                     style={{ cursor: t.status === 'Open' ? 'pointer' : 'not-allowed' }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
@@ -478,7 +500,10 @@ export const EnrollmentPage = () => {
               </div>
             )}
 
-            <div className="table-responsive">
+            {offeringsLoading ? (
+              <LoadingState message="Loading subject offerings..." />
+            ) : (
+              <div className="table-responsive">
               <table className="table table-hover table-pnc align-middle">
                 <thead>
                   <tr>
@@ -536,7 +561,16 @@ export const EnrollmentPage = () => {
                   })}
                 </tbody>
               </table>
-            </div>
+              </div>
+            )}
+            {!offeringsLoading && (
+              <PaginationControls
+                {...offeringsPagination}
+                onPageChange={(page) => loadOfferingsPage(page).catch((err) => {
+                  setConflictWarning(err.message || 'Could not load subject offerings. Please try again.');
+                })}
+              />
+            )}
 
             <div className="d-flex justify-content-between mt-4">
               <button className="btn btn-outline-secondary" onClick={() => setCurrentStep(1)}>

@@ -1,10 +1,10 @@
 import api from './api';
 
 export const gradeService = {
-  getGrades: async () => (await api.get('/grades')).data,
+  getGrades: async (params) => (await api.get('/grades', { params })).data,
 
-  getGradesByStudent: async (studentNumber) =>
-    (await api.get('/grades', { params: { studentNumber } })).data,
+  getGradesByStudent: async (studentNumber, pagination) =>
+    (await api.get('/grades', { params: { studentNumber, ...pagination } })).data,
 
   // Department encodes grades
   encodeGrade: async (gradeData) => (await api.post('/grades', gradeData)).data,

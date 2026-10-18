@@ -5,6 +5,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/feedback/Modal';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
+import { PaginationControls } from '../../components/tables/PaginationControls';
 import { paymentService } from '../../services/paymentService';
 import {
   enrollmentService,
@@ -12,11 +13,14 @@ import {
   isEnrollmentCompleted,
   isEnrollmentPaymentEligible
 } from '../../services/enrollmentService';
+import { pageParams, readPage } from '../../services/api';
 
 export const PaymentsPage = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
+  const [paymentPagination, setPaymentPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
+  const [verifiedEnrollmentIds, setVerifiedEnrollmentIds] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -31,7 +35,9 @@ export const PaymentsPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [successMessage, setSuccessMessage] = useState('');
   const paymentEligibleEnrollments = enrollments.filter(
-    (enrollment) => isEnrollmentPaymentEligible(enrollment) && !isEnrollmentCompleted(enrollment, payments)
+    (enrollment) => isEnrollmentPaymentEligible(enrollment) &&
+      !isEnrollmentCompleted(enrollment) &&
+      !verifiedEnrollmentIds.includes(enrollment.id)
   );
   const waitingRegistrarEnrollments = enrollments.filter(isEnrollmentAwaitingRegistrar);
 
@@ -39,11 +45,14 @@ export const PaymentsPage = () => {
     setLoading(true);
     try {
       const studentNo = currentUser?.studentNumber || '2026-00001';
-      const [payList, enrList] = await Promise.all([
-        paymentService.getPaymentsByStudent(studentNo),
+      const [paymentPage, enrList] = await Promise.all([
+        paymentService.getPaymentsByStudent(studentNo, pageParams(1)),
         enrollmentService.getEnrollmentByStudent(studentNo)
       ]);
-      setPayments(payList);
+      const page = readPage(paymentPage);
+      setPayments(page.data);
+      setPaymentPagination(page);
+      setVerifiedEnrollmentIds(paymentPage.verifiedEnrollmentIds || []);
       setEnrollments(enrList);
       const eligibleEnrollment =
         enrList.find((enrollment) => enrollment.id === enrollmentId && isEnrollmentPaymentEligible(enrollment)) ||
@@ -64,6 +73,22 @@ export const PaymentsPage = () => {
   useEffect(() => {
     loadData();
   }, [currentUser]);
+
+  const loadPaymentPage = async (page = 1) => {
+    setLoading(true);
+    try {
+      const studentNo = currentUser?.studentNumber || '2026-00001';
+      const paymentPage = await paymentService.getPaymentsByStudent(studentNo, pageParams(page));
+      const result = readPage(paymentPage);
+      setPayments(result.data);
+      setPaymentPagination(result);
+      setVerifiedEnrollmentIds(paymentPage.verifiedEnrollmentIds || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     setFileError('');
@@ -278,6 +303,11 @@ export const PaymentsPage = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {payments.length > 0 && (
+            <div className="px-3 pb-3">
+              <PaginationControls {...paymentPagination} onPageChange={loadPaymentPage} />
             </div>
           )}
         </div>
