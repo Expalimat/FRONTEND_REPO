@@ -31,11 +31,12 @@
   --pnc-secondary-light: #fff8e1;
   --pnc-dark: #1e293b;
   --pnc-light: #f8fafc;
-  --pnc-sidebar-bg: #153d32;
-  --pnc-sidebar-hover: #214b3e;
-  --pnc-sidebar-active: #e5f1eb;
+  --pnc-page-bg: #f7f9f8;
+  --pnc-sidebar-bg: #0d3f2a;
+  --pnc-sidebar-hover: #1b5237;
+  --pnc-sidebar-active: #386348;
   --pnc-card-bg: #ffffff;
-  --pnc-border-color: #e2e8f0;
+  --pnc-border-color: #cec49d;
   --pnc-text-muted: #64748b;
   --pnc-header-height: 64px;
   --pnc-sidebar-width: 260px;
@@ -48,7 +49,7 @@
 
 body {
   font-family: var(--font-family);
-  background-color: #ffffff;
+  background-color: var(--pnc-page-bg);
   color: var(--pnc-dark);
   margin: 0;
   padding: 0;
@@ -76,6 +77,16 @@ body {
 .app-layout {
   display: flex;
   min-height: 100vh;
+}
+
+.app-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  background: #b9a04f;
+  z-index: 1100;
+  pointer-events: none;
 }
 
 /* Sidebar Desktop */
@@ -175,7 +186,7 @@ body {
 
 .sidebar-link.active {
   background-color: var(--pnc-sidebar-active);
-  color: #173d32;
+  color: #ffffff;
   font-weight: 600;
   box-shadow: inset 3px 0 0 var(--pnc-secondary), 0 2px 10px rgba(212, 160, 23, 0.08);
 }
@@ -197,7 +208,7 @@ body {
 }
 
 .sidebar-link.active i {
-  color: #a77c12;
+  color: #e2c65e;
   transform: scale(1.06);
 }
 
@@ -294,9 +305,7 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 100vh;
-  background: rgba(232, 245, 233, 0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(232, 245, 233, 0.2);
   transition: all 0.25s ease-in-out;
 }
 
@@ -337,14 +346,14 @@ body {
   background: #ffffff;
   border-radius: 10px;
   border: 1px solid var(--pnc-border-color);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 7px rgba(91, 76, 28, 0.08);
   margin-bottom: 1.5rem;
   overflow: hidden;
 }
 
 .pnc-card-header {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--pnc-border-color);
+  border-bottom: 1px solid rgba(185, 160, 79, 0.32);
   background-color: #ffffff;
   display: flex;
   align-items: center;
@@ -366,13 +375,13 @@ body {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 7px rgba(91, 76, 28, 0.08);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 5px 13px rgba(91, 76, 28, 0.12);
 }
 
 .stat-icon-wrapper {
