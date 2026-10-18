@@ -6,8 +6,7 @@ import { useNotifications } from '../../context/NotificationContext';
 export const Header = ({ onToggleSidebar }) => {
   const { currentUser, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const [showNotifMenu, setShowNotifMenu] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -55,7 +54,7 @@ export const Header = ({ onToggleSidebar }) => {
         <div className="position-relative">
           <button
             className="btn btn-light position-relative p-2 rounded-circle border"
-            onClick={() => setShowNotifMenu(!showNotifMenu)}
+            onClick={() => setOpenMenu((menu) => (menu === 'notifications' ? null : 'notifications'))}
             aria-label="Notifications"
           >
             <i className="bi bi-bell text-dark"></i>
@@ -66,7 +65,7 @@ export const Header = ({ onToggleSidebar }) => {
             )}
           </button>
 
-          {showNotifMenu && (
+          {openMenu === 'notifications' && (
             <div
               className="position-absolute end-0 mt-2 bg-white shadow-lg rounded border notifications-dropdown"
               style={{ zIndex: 1050 }}
@@ -122,7 +121,7 @@ export const Header = ({ onToggleSidebar }) => {
                       : `/${currentUser?.role?.toLowerCase().replace(/\s+/g, '')}/dashboard`
                   }
                   className="small text-decoration-none fw-semibold text-success"
-                  onClick={() => setShowNotifMenu(false)}
+                  onClick={() => setOpenMenu(null)}
                 >
                   View all notifications
                 </Link>
@@ -135,7 +134,7 @@ export const Header = ({ onToggleSidebar }) => {
         <div className="position-relative">
           <button
             className="btn btn-light d-flex align-items-center gap-2 p-1 pe-2 rounded-pill border"
-            onClick={() => setShowUserMenu(!showUserMenu)}
+            onClick={() => setOpenMenu((menu) => (menu === 'user' ? null : 'user'))}
           >
             <div
               className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
@@ -149,7 +148,7 @@ export const Header = ({ onToggleSidebar }) => {
             <i className="bi bi-chevron-down small text-muted"></i>
           </button>
 
-          {showUserMenu && (
+          {openMenu === 'user' && (
             <div
               className="position-absolute end-0 mt-2 bg-white shadow-lg rounded border p-2"
               style={{ width: '200px', zIndex: 1050 }}
@@ -164,7 +163,7 @@ export const Header = ({ onToggleSidebar }) => {
                 <Link
                   to="/student/profile"
                   className="dropdown-item rounded p-2 small text-dark"
-                  onClick={() => setShowUserMenu(false)}
+                  onClick={() => setOpenMenu(null)}
                 >
                   <i className="bi bi-person me-2"></i>My Profile
                 </Link>
