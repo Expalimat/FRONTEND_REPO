@@ -46,7 +46,7 @@ export const GradeValidationPage = () => {
       setSelectedGrade(null);
       loadGrades();
     } catch (err) {
-      alert('Failed to validate grade.');
+      alert(err.message || 'Failed to validate grade.');
     } finally {
       setProcessing(false);
     }

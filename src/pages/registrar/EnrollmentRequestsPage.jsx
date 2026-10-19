@@ -66,7 +66,7 @@ export const EnrollmentRequestsPage = () => {
       setShowViewModal(false);
       loadEnrollments();
     } catch (err) {
-      alert('Failed to update status.');
+      alert(err.message || 'Failed to update status.');
     } finally {
       setProcessing(false);
     }

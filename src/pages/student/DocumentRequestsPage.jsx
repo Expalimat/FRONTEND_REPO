@@ -64,7 +64,7 @@ export const DocumentRequestsPage = () => {
       loadRequests();
     } catch (err) {
       setSubmitting(false);
-      alert('Failed to submit request.');
+      alert(err.message || 'Failed to submit request.');
     }
   };
 

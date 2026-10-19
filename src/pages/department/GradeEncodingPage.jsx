@@ -106,7 +106,7 @@ export const GradeEncodingPage = () => {
       const updatedGrades = await gradeService.getGrades();
       setSavedGrades(updatedGrades);
     } catch (err) {
-      alert('Failed to encode grade.');
+      alert(err.message || 'Failed to encode grade.');
     } finally {
       setSavingIndex(null);
     }

@@ -131,7 +131,9 @@ export const EnrollmentPage = () => {
   const tuitionFee = totalUnits * 200;
   const miscFee = 1250;
   const labFee = selectedSubjects.length > 2 ? 1500 : 800;
-  const totalFee = tuitionFee + miscFee + labFee;
+  const libraryFee = 300;
+  const athleticFee = 200;
+  const totalFee = tuitionFee + miscFee + labFee + libraryFee + athleticFee;
 
   const handleFinalSubmit = async () => {
     const existingActiveEnrollment = existingEnrollments.find(
@@ -164,6 +166,8 @@ export const EnrollmentPage = () => {
             tuition: tuitionFee,
             miscellaneous: miscFee,
             laboratory: labFee,
+            library: libraryFee,
+            athletic: athleticFee,
             total: totalFee
           }
         },
@@ -672,6 +676,14 @@ export const EnrollmentPage = () => {
                   <div className="d-flex justify-content-between py-2 border-bottom">
                     <span className="text-muted">Laboratory & Technology Fee</span>
                     <span className="fw-semibold">₱{labFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-2 border-bottom">
+                    <span className="text-muted">Library Fee</span>
+                    <span className="fw-semibold">₱{libraryFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-2 border-bottom">
+                    <span className="text-muted">Athletic Fee</span>
+                    <span className="fw-semibold">₱{athleticFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="d-flex justify-content-between pt-3 fs-5 fw-bold text-success">
                     <span>Total Estimated Assessment</span>

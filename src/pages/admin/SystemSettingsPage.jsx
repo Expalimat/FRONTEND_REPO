@@ -45,7 +45,7 @@ export const SystemSettingsPage = () => {
       await systemSettingsService.updateSettings(settings, currentUser?.name || 'Administrator');
       setToastMessage('System settings and enrollment parameters updated successfully.');
     } catch (err) {
-      alert('Failed to update settings.');
+      alert(err.message || 'Failed to update settings.');
     } finally {
       setSaving(false);
     }
