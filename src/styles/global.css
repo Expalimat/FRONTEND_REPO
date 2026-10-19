@@ -305,7 +305,7 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 100vh;
-  background: rgba(255, 248, 225, 0.58);
+  background: #ffffff;
   transition: all 0.25s ease-in-out;
 }
 
