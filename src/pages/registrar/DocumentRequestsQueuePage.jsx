@@ -55,7 +55,7 @@ export const DocumentRequestsQueuePage = () => {
       setShowViewModal(false);
       loadRequests();
     } catch (err) {
-      alert('Failed to update document status.');
+      alert(err.message || 'Failed to update document status.');
     } finally {
       setProcessing(false);
     }

@@ -59,7 +59,7 @@ export const UserManagementPage = () => {
       name: '',
       email: '',
       role: 'Student',
-      studentNumber: `2026-0000${users.length + 1}`,
+      studentNumber: `2026-${String(pagination.total + 1).padStart(5, '0')}`,
       program: 'BS Information Technology',
       yearLevel: '1st Year',
       department: ''
@@ -96,7 +96,7 @@ export const UserManagementPage = () => {
       setShowModal(false);
       loadUsers();
     } catch (err) {
-      alert('Failed to save user.');
+      alert(err.message || 'Failed to save user.');
     }
   };
 
@@ -109,7 +109,7 @@ export const UserManagementPage = () => {
       setToggleTarget(null);
       loadUsers();
     } catch (err) {
-      alert('Failed to change status.');
+      alert(err.message || 'Failed to change status.');
     } finally {
       setProcessing(false);
     }

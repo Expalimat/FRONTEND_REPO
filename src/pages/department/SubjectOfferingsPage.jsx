@@ -109,7 +109,7 @@ export const SubjectOfferingsPage = () => {
       setShowModal(false);
       loadOfferings();
     } catch (err) {
-      alert('Failed to save offering.');
+      alert(err.message || 'Failed to save offering.');
     }
   };
 
