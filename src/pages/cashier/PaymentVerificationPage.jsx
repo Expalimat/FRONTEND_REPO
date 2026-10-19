@@ -13,20 +13,18 @@ export const PaymentVerificationPage = () => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Verified' | 'Rejected'
   const [showSlipModal, setShowSlipModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadPayments = async (page = 1, nextFilters = filters) => {
+  const loadPayments = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await paymentService.getPayments(pageParams(page, nextFilters)));
+      const result = readPage(await paymentService.getPayments(pageParams(page, filters)));
       setPayments(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -54,7 +52,7 @@ export const PaymentVerificationPage = () => {
       setShowSlipModal(false);
       loadPayments();
     } catch (err) {
-      alert(err.message || 'Failed to update payment status.');
+      alert('Failed to update payment status.');
     } finally {
       setProcessing(false);
     }
@@ -180,6 +178,7 @@ export const PaymentVerificationPage = () => {
           <DataTable
             columns={columns}
             data={payments}
+            serverPagination={{ ...pagination, onPageChange: loadPayments }}
             filterField="status"
             filterOptions={[
               { label: 'Pending Verification', value: 'Pending' },
@@ -189,7 +188,6 @@ export const PaymentVerificationPage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search by payment ID, student, reference number..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadPayments }}
           />
         </div>
       </div>

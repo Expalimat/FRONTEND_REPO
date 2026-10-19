@@ -131,9 +131,7 @@ export const EnrollmentPage = () => {
   const tuitionFee = totalUnits * 200;
   const miscFee = 1250;
   const labFee = selectedSubjects.length > 2 ? 1500 : 800;
-  const libraryFee = 300;
-  const athleticFee = 200;
-  const totalFee = tuitionFee + miscFee + labFee + libraryFee + athleticFee;
+  const totalFee = tuitionFee + miscFee + labFee;
 
   const handleFinalSubmit = async () => {
     const existingActiveEnrollment = existingEnrollments.find(
@@ -166,8 +164,6 @@ export const EnrollmentPage = () => {
             tuition: tuitionFee,
             miscellaneous: miscFee,
             laboratory: labFee,
-            library: libraryFee,
-            athletic: athleticFee,
             total: totalFee
           }
         },
@@ -449,15 +445,7 @@ export const EnrollmentPage = () => {
                 <div key={t.id} className="col-md-6">
                   <div
                     className={`p-4 rounded-3 border ${selectedTerm === `${t.semester} ${t.academicYear}` ? 'border-success bg-success-subtle' : 'bg-white'} ${t.status !== 'Open' ? 'opacity-50' : ''}`}
-                    onClick={() => {
-                      if (t.status === 'Open') {
-                        const termName = `${t.semester} ${t.academicYear}`;
-                        setSelectedTerm(termName);
-                        loadOfferingsPage(1, termName).catch((err) => {
-                          setConflictWarning(err.message || 'Could not load subject offerings. Please try again.');
-                        });
-                      }
-                    }}
+                    onClick={() => t.status === 'Open' && setSelectedTerm(`${t.semester} ${t.academicYear}`)}
                     style={{ cursor: t.status === 'Open' ? 'pointer' : 'not-allowed' }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
@@ -476,7 +464,14 @@ export const EnrollmentPage = () => {
             <div className="d-flex justify-content-end">
               <button
                 className="btn btn-pnc-primary"
-                onClick={() => setCurrentStep(2)}
+                onClick={async () => {
+                  try {
+                    await loadOfferingsPage(1, selectedTerm);
+                    setCurrentStep(2);
+                  } catch (err) {
+                    alert(err.message || 'Could not load subject offerings. Please try again.');
+                  }
+                }}
                 disabled={!terms.some((term) => term.status === 'Open' && selectedTerm === `${term.semester} ${term.academicYear}`)}
               >
                 Proceed to Subject Selection <i className="bi bi-arrow-right ms-1"></i>
@@ -504,69 +499,69 @@ export const EnrollmentPage = () => {
               </div>
             )}
 
-            {offeringsLoading ? (
-              <LoadingState message="Loading subject offerings..." />
-            ) : (
-              <div className="table-responsive">
-              <table className="table table-hover table-pnc align-middle">
-                <thead>
-                  <tr>
-                    <th style={{ width: '40px' }}>Select</th>
-                    <th>Subject Code & Title</th>
-                    <th>Units</th>
-                    <th>Section</th>
-                    <th>Schedule & Room</th>
-                    <th>Slots</th>
-                    <th>Prerequisite</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {offerings.map((offering) => {
-                    const isSelected = selectedSubjects.some((s) => s.id === offering.id);
-                    const isAlreadyEnrolled = enrolledSubjectCodes.has(offering.subjectCode?.trim().toUpperCase());
-                    const isFull = offering.availableSlots <= 0;
-                    const prerequisiteText = (offering.prerequisites || 'None').replace(/\s*\(Unsatisfied\)/i, '');
+            <div className="table-responsive">
+              {offeringsLoading ? (
+                <LoadingState message="Loading subject offerings..." />
+              ) : (
+                <table className="table table-hover table-pnc align-middle">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40px' }}>Select</th>
+                      <th>Subject Code & Title</th>
+                      <th>Units</th>
+                      <th>Section</th>
+                      <th>Schedule & Room</th>
+                      <th>Slots</th>
+                      <th>Prerequisite</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {offerings.map((offering) => {
+                      const isSelected = selectedSubjects.some((s) => s.id === offering.id);
+                      const isAlreadyEnrolled = enrolledSubjectCodes.has(offering.subjectCode?.trim().toUpperCase());
+                      const isFull = offering.availableSlots <= 0;
+                      const prerequisiteText = (offering.prerequisites || 'None').replace(/\s*\(Unsatisfied\)/i, '');
 
-                    return (
-                      <tr key={offering.id} className={isSelected ? 'table-success-subtle' : isAlreadyEnrolled ? 'table-light' : ''}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={isSelected}
-                            onChange={() => handleToggleSubject(offering)}
-                            disabled={isAlreadyEnrolled || isFull}
-                          />
-                        </td>
-                        <td>
-                          <div className="fw-bold text-dark">{offering.subjectCode}</div>
-                          <div className="small text-muted">{offering.subjectTitle}</div>
-                        </td>
-                        <td><span className="fw-semibold">{offering.units}</span></td>
-                        <td><span className="badge bg-light text-dark border">{offering.section}</span></td>
-                        <td>
-                          <div className="small text-dark">{offering.schedule}</div>
-                          <div className="small text-muted">{offering.room}</div>
-                        </td>
-                        <td>
-                          {isAlreadyEnrolled ? (
-                            <span className="badge bg-success-subtle text-success border border-success-subtle">Already Enrolled</span>
-                          ) : isFull ? (
-                            <StatusBadge status="Full" />
-                          ) : (
-                            <span className="small text-muted">{offering.availableSlots} / {offering.totalSlots} left</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className="small text-muted">{prerequisiteText}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              </div>
-            )}
+                      return (
+                        <tr key={offering.id} className={isSelected ? 'table-success-subtle' : isAlreadyEnrolled ? 'table-light' : ''}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              checked={isSelected}
+                              onChange={() => handleToggleSubject(offering)}
+                              disabled={isAlreadyEnrolled || isFull}
+                            />
+                          </td>
+                          <td>
+                            <div className="fw-bold text-dark">{offering.subjectCode}</div>
+                            <div className="small text-muted">{offering.subjectTitle}</div>
+                          </td>
+                          <td><span className="fw-semibold">{offering.units}</span></td>
+                          <td><span className="badge bg-light text-dark border">{offering.section}</span></td>
+                          <td>
+                            <div className="small text-dark">{offering.schedule}</div>
+                            <div className="small text-muted">{offering.room}</div>
+                          </td>
+                          <td>
+                            {isAlreadyEnrolled ? (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle">Already Enrolled</span>
+                            ) : isFull ? (
+                              <StatusBadge status="Full" />
+                            ) : (
+                              <span className="small text-muted">{offering.availableSlots} / {offering.totalSlots} left</span>
+                            )}
+                          </td>
+                          <td>
+                            <span className="small text-muted">{prerequisiteText}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
             {!offeringsLoading && (
               <PaginationControls
                 {...offeringsPagination}
@@ -676,14 +671,6 @@ export const EnrollmentPage = () => {
                   <div className="d-flex justify-content-between py-2 border-bottom">
                     <span className="text-muted">Laboratory & Technology Fee</span>
                     <span className="fw-semibold">₱{labFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="d-flex justify-content-between py-2 border-bottom">
-                    <span className="text-muted">Library Fee</span>
-                    <span className="fw-semibold">₱{libraryFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="d-flex justify-content-between py-2 border-bottom">
-                    <span className="text-muted">Athletic Fee</span>
-                    <span className="fw-semibold">₱{athleticFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="d-flex justify-content-between pt-3 fs-5 fw-bold text-success">
                     <span>Total Estimated Assessment</span>

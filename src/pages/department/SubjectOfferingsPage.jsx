@@ -12,7 +12,6 @@ export const SubjectOfferingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [offerings, setOfferings] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [targetId, setTargetId] = useState(null);
@@ -33,13 +32,12 @@ export const SubjectOfferingsPage = () => {
   });
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadOfferings = async (page = 1, nextFilters = filters) => {
+  const loadOfferings = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await enrollmentService.getOfferings(null, pageParams(page, nextFilters)));
+      const result = readPage(await enrollmentService.getOfferings(null, pageParams(page, filters)));
       setOfferings(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -109,7 +107,7 @@ export const SubjectOfferingsPage = () => {
       setShowModal(false);
       loadOfferings();
     } catch (err) {
-      alert(err.message || 'Failed to save offering.');
+      alert('Failed to save offering.');
     }
   };
 
@@ -209,6 +207,7 @@ export const SubjectOfferingsPage = () => {
           <DataTable
             columns={columns}
             data={offerings}
+            serverPagination={{ ...pagination, onPageChange: loadOfferings }}
             filterField="status"
             filterOptions={[
               { label: 'Open', value: 'Open' },
@@ -217,7 +216,6 @@ export const SubjectOfferingsPage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search subject code, title, section, or instructor..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadOfferings }}
           />
         </div>
       </div>

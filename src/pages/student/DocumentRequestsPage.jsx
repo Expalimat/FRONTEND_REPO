@@ -64,7 +64,7 @@ export const DocumentRequestsPage = () => {
       loadRequests();
     } catch (err) {
       setSubmitting(false);
-      alert(err.message || 'Failed to submit request.');
+      alert('Failed to submit request.');
     }
   };
 
@@ -193,7 +193,7 @@ export const DocumentRequestsPage = () => {
               </table>
             </div>
           )}
-          {requests.length > 0 && (
+          {!loading && requests.length > 0 && (
             <div className="px-3 pb-3">
               <PaginationControls {...pagination} onPageChange={loadRequests} />
             </div>

@@ -14,20 +14,18 @@ export const DocumentRequestsQueuePage = () => {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Processing' | 'Released' | 'Rejected'
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
 
-  const loadRequests = async (page = 1, nextFilters = filters) => {
+  const loadRequests = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await documentService.getRequests(pageParams(page, nextFilters)));
+      const result = readPage(await documentService.getRequests(pageParams(page, filters)));
       setRequests(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,7 +53,7 @@ export const DocumentRequestsQueuePage = () => {
       setShowViewModal(false);
       loadRequests();
     } catch (err) {
-      alert(err.message || 'Failed to update document status.');
+      alert('Failed to update document status.');
     } finally {
       setProcessing(false);
     }
@@ -178,6 +176,7 @@ export const DocumentRequestsQueuePage = () => {
           <DataTable
             columns={columns}
             data={requests}
+            serverPagination={{ ...pagination, onPageChange: loadRequests }}
             filterField="status"
             filterOptions={[
               { label: 'Pending', value: 'Pending' },
@@ -188,7 +187,6 @@ export const DocumentRequestsQueuePage = () => {
             filterPlaceholder="Filter Status"
             searchPlaceholder="Search by tracking number, student or document..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadRequests }}
           />
         </div>
       </div>
