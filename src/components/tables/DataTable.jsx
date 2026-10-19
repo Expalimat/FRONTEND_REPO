@@ -81,10 +81,6 @@ export const DataTable = ({
     (_, index) => firstVisiblePage + index
   );
 
-  if (loading) {
-    return <LoadingState message="Loading records..." />;
-  }
-
   return (
     <div>
       {/* Search and Filters */}
@@ -150,7 +146,9 @@ export const DataTable = ({
         </div>
       )}
 
-      {filteredData.length === 0 ? (
+      {loading ? (
+        <LoadingState message="Loading records..." />
+      ) : filteredData.length === 0 ? (
         <EmptyState title={emptyTitle} message={emptyMessage} />
       ) : (
         <>
