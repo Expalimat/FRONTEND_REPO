@@ -162,6 +162,12 @@ export const FeeAssessmentPage = () => {
                   <span className="fw-semibold font-monospace">₱{selectedEnr.fees.library.toLocaleString()}</span>
                 </div>
               )}
+              {selectedEnr.fees?.athletic && (
+                <div className="d-flex justify-content-between py-1 border-bottom">
+                  <span className="text-muted">Athletic Fee</span>
+                  <span className="fw-semibold font-monospace">₱{selectedEnr.fees.athletic.toLocaleString()}</span>
+                </div>
+              )}
               <div className="d-flex justify-content-between pt-3 fs-5 fw-bold text-success border-top">
                 <span>Total Assessment Due:</span>
                 <span className="font-monospace">₱{selectedEnr.fees?.total?.toLocaleString() || '0.00'}</span>

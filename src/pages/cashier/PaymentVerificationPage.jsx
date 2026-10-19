@@ -54,7 +54,7 @@ export const PaymentVerificationPage = () => {
       setShowSlipModal(false);
       loadPayments();
     } catch (err) {
-      alert('Failed to update payment status.');
+      alert(err.message || 'Failed to update payment status.');
     } finally {
       setProcessing(false);
     }

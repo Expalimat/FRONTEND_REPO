@@ -46,7 +46,10 @@ api.interceptors.response.use(
       (err.request && !err.response ? 'Cannot reach the server. Please try again.' : err.message);
 
     // expired / invalid token (but not a wrong password on the login form)
-    if (err.response?.status === 401 && !err.config?.url?.includes('/login')) {
+    const sessionEnded =
+      err.response?.status === 401 ||
+      (err.response?.status === 403 && /deactivated/i.test(data?.message || ''));
+    if (sessionEnded && !err.config?.url?.includes('/login')) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       if (window.location.pathname !== '/login') window.location.href = '/login';

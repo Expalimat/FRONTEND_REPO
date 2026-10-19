@@ -52,7 +52,7 @@ export const CashierClearancePage = () => {
       setSelectedClearance(null);
       loadClearances();
     } catch (err) {
-      alert('Failed to update clearance.');
+      alert(err.message || 'Failed to update clearance.');
     } finally {
       setProcessing(false);
     }
