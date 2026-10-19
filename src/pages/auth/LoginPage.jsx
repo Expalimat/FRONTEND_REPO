@@ -38,27 +38,25 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-column justify-content-center align-items-center bg-light p-3">
-      <div className="w-100" style={{ maxWidth: '440px' }}>
-        {/* Logo and System Header */}
-        <div className="text-center mb-4">
-          <div
-            className="login-logo d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm mb-3"
-            style={{ width: '60px', height: '60px', fontSize: '1.75rem', fontWeight: 'bold' }}
-          >
-            PnC
+    <div className="login-page">
+      <div className="login-shell">
+        <section className="login-visual" aria-label="Pamantasan ng Cabuyao campus">
+          <div className="login-visual-image" aria-hidden="true"></div>
+          <div className="login-visual-overlay">
+            <div className="login-logo login-logo-corner d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm">PnC</div>
+            <div className="login-pitch">
+              <p>Pamantasan ng Cabuyao: affordable, quality education that shapes Cabuyeños to be world-ready and committed to serving their community.</p>
+            </div>
           </div>
-          <h3 className="fw-bold text-dark mb-1">PnC-OESS Portal</h3>
-          <p className="text-muted small mb-0">
-            Pamantasan ng Cabuyao Online Enrollment & Student Services
-          </p>
-        </div>
+        </section>
 
-        {/* Main Login Card */}
-        <div className="card login-card shadow-sm border-0 rounded-4 overflow-hidden">
-          <div className="card-body p-4">
-            <h5 className="card-title fw-bold text-dark mb-1">Sign In to Your Account</h5>
-            <p className="text-muted small mb-4">Enter your credentials to access the portal</p>
+        <section className="login-panel">
+          <div className="login-panel-content">
+            <div className="login-panel-heading">
+              <span className="login-kicker">Pamantasan ng Cabuyao</span>
+              <h2>Sign In to Your Account</h2>
+              <p>Enter your credentials to access the portal.</p>
+            </div>
 
             {error && (
               <div className="alert alert-danger d-flex align-items-center py-2 px-3 small rounded-3 mb-3" role="alert">
@@ -143,15 +141,11 @@ export const LoginPage = () => {
             </form>
           </div>
 
-        </div>
-
-        {/* Footer info */}
-        <div className="text-center mt-4 text-muted small">
-          <div>Pamantasan ng Cabuyao &bull; Official Student Portal</div>
-          <div className="mt-1" style={{ fontSize: '0.72rem' }}>
-            For technical inquiries, contact MIS Helpdesk at helpdesk@pnc.edu.ph
+          <div className="login-footer">
+            <span>Pamantasan ng Cabuyao &bull; Official Student Portal</span>
+            <span>For technical inquiries, contact MIS Helpdesk at helpdesk@pnc.edu.ph</span>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
