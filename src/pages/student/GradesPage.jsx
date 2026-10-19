@@ -4,8 +4,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { EmptyState } from '../../components/feedback/EmptyState';
 import { LoadingState } from '../../components/feedback/LoadingState';
-import { gradeService } from '../../services/gradeService';
 import { PaginationControls } from '../../components/tables/PaginationControls';
+import { gradeService } from '../../services/gradeService';
 import { pageParams, readPage } from '../../services/api';
 
 export const GradesPage = () => {
@@ -38,10 +38,7 @@ export const GradesPage = () => {
     loadGrades();
   }, [currentUser, selectedTerm]);
 
-  if (loading) {
-    return <LoadingState message="Loading student grades & academic standing..." />;
-  }
-
+  if (loading) return <LoadingState message="Loading student grades & academic standing..." />;
   const termGrades = grades;
 
   return (
@@ -147,11 +144,6 @@ export const GradesPage = () => {
                               Awaiting Registrar Validation
                             </span>
                           )}
-                          {termGrades.length > 0 && (
-                            <div className="px-3 pb-3">
-                              <PaginationControls {...pagination} onPageChange={loadGrades} />
-                            </div>
-                          )}
                         </td>
                         <td>
                           <StatusBadge status={g.status} />
@@ -179,6 +171,11 @@ export const GradesPage = () => {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+          {termGrades.length > 0 && (
+            <div className="px-3 pb-3">
+              <PaginationControls {...pagination} onPageChange={loadGrades} />
             </div>
           )}
         </div>

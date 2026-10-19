@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -12,34 +12,39 @@ import { clearanceService } from '../../services/clearanceService';
 import { documentService } from '../../services/documentService';
 import { gradeService } from '../../services/gradeService';
 import { isEnrollmentCompleted } from '../../services/enrollmentService';
+import { appointmentService } from '../../services/appointmentService';
 
 export const StudentDashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const quickActionsRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
   const [payments, setPayments] = useState([]);
   const [clearance, setClearance] = useState(null);
   const [documentRequests, setDocumentRequests] = useState([]);
   const [grades, setGrades] = useState([]);
+  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const studentNo = currentUser?.studentNumber || '2026-00001';
-        const [enrData, payData, clrData, docData, grdData] = await Promise.all([
+        const [enrData, payData, clrData, docData, grdData, apptData] = await Promise.all([
           enrollmentService.getEnrollmentByStudent(studentNo),
           paymentService.getPaymentsByStudent(studentNo),
           clearanceService.getClearanceByStudent(studentNo),
           documentService.getRequestsByStudent(studentNo),
-          gradeService.getGradesByStudent(studentNo)
+          gradeService.getGradesByStudent(studentNo),
+          appointmentService.getAppointments()
         ]);
         setEnrollments(enrData);
         setPayments(payData);
         setClearance(clrData);
         setDocumentRequests(docData);
         setGrades(grdData);
+        setAppointments(apptData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -59,6 +64,7 @@ export const StudentDashboard = () => {
     : latestEnrollmentRecord;
   const latestPayment = payments[0];
   const pendingDocsCount = documentRequests.filter((d) => d.status !== 'Released' && d.status !== 'Rejected').length;
+  const upcomingAppointment = appointments.find((appointment) => ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'WAITING', 'SERVING'].includes(appointment.status));
 
   return (
     <div>
@@ -118,53 +124,100 @@ export const StudentDashboard = () => {
       </div>
 
       {/* Quick Action Buttons */}
-      <div className="pnc-card mb-4">
-        <div className="pnc-card-header">
+      <div className="pnc-card mb-4 dashboard-quick-actions-card">
+        <div className="pnc-card-header dashboard-quick-actions-header">
           <span>
             <i className="bi bi-lightning-charge-fill text-secondary me-2"></i>Quick Actions
           </span>
+          <div className="dashboard-quick-actions-controls" aria-label="Quick action navigation">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => quickActionsRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}
+              aria-label="Scroll quick actions left"
+            >
+              <i className="bi bi-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() => quickActionsRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
+              aria-label="Scroll quick actions right"
+            >
+              <i className="bi bi-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
-        <div className="pnc-card-body">
-          <div className="row g-3">
-            <div className="col-6 col-md-4 col-lg-2">
+        <div className="pnc-card-body dashboard-quick-actions-body">
+          <div className="dashboard-quick-actions-list" ref={quickActionsRef}>
+            <div className="dashboard-quick-action-item">
               <Link to="/student/enrollment" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-journal-plus fs-3"></i>
                 <span className="small fw-semibold">Enroll Now</span>
               </Link>
             </div>
-            <div className="col-6 col-md-4 col-lg-2">
+            <div className="dashboard-quick-action-item">
               <Link to="/student/schedule" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-calendar-week fs-3"></i>
                 <span className="small fw-semibold">View Schedule</span>
               </Link>
             </div>
-            <div className="col-6 col-md-4 col-lg-2">
+            <div className="dashboard-quick-action-item">
               <Link to="/student/payments" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-cash-coin fs-3"></i>
                 <span className="small fw-semibold">View Payments</span>
               </Link>
             </div>
-            <div className="col-6 col-md-4 col-lg-2">
+            <div className="dashboard-quick-action-item">
               <Link to="/student/clearance" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-clipboard-check fs-3"></i>
                 <span className="small fw-semibold">Check Clearance</span>
               </Link>
             </div>
-            <div className="col-6 col-md-4 col-lg-2">
+            <div className="dashboard-quick-action-item">
               <Link to="/student/grades" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-mortarboard fs-3"></i>
                 <span className="small fw-semibold">View Grades</span>
               </Link>
             </div>
-            <div className="col-6 col-md-4 col-lg-2">
+            <div className="dashboard-quick-action-item">
               <Link to="/student/documents" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
                 <i className="bi bi-file-earmark-arrow-up fs-3"></i>
                 <span className="small fw-semibold">Request Document</span>
               </Link>
             </div>
+            <div className="dashboard-quick-action-item">
+              <Link to="/student/appointments" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+                <i className="bi bi-calendar2-check fs-3"></i>
+                <span className="small fw-semibold">Appointments</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
+
+      <section className="pnc-card mb-4">
+        <div className="pnc-card-header d-flex justify-content-between align-items-center">
+          <span><i className="bi bi-calendar2-check text-success me-2"></i>Upcoming appointment</span>
+          <Link to="/student/appointments" className="btn btn-sm btn-outline-primary">View appointments</Link>
+        </div>
+        <div className="pnc-card-body">
+          {upcomingAppointment ? (
+            <div className="row g-3">
+              <div className="col-md-3"><div className="small text-muted">Reference</div><strong>{upcomingAppointment.appointmentNumber}</strong></div>
+              <div className="col-md-3"><div className="small text-muted">Service</div><span>{upcomingAppointment.serviceName}</span></div>
+              <div className="col-md-3"><div className="small text-muted">Date &amp; time</div><span>{upcomingAppointment.appointmentDate}, {upcomingAppointment.startTime}–{upcomingAppointment.endTime}</span></div>
+              <div className="col-md-3"><div className="small text-muted">Status</div><StatusBadge status={upcomingAppointment.status} /></div>
+              {upcomingAppointment.instructions && <div className="col-12"><div className="alert alert-light border mb-0">{upcomingAppointment.instructions}</div></div>}
+            </div>
+          ) : (
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <span className="text-muted">You have no upcoming appointments.</span>
+              <Link to="/student/appointments" className="btn btn-pnc-primary">Book an appointment</Link>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Main Two-Column Layout */}
       <div className="row g-4">

@@ -43,7 +43,7 @@ export const LoginPage = () => {
         {/* Logo and System Header */}
         <div className="text-center mb-4">
           <div
-            className="d-inline-flex align-items-center justify-content-center rounded-3 bg-success text-white shadow-sm mb-3"
+            className="login-logo d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm mb-3"
             style={{ width: '60px', height: '60px', fontSize: '1.75rem', fontWeight: 'bold' }}
           >
             PnC
@@ -55,7 +55,7 @@ export const LoginPage = () => {
         </div>
 
         {/* Main Login Card */}
-        <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div className="card login-card shadow-sm border-0 rounded-4 overflow-hidden">
           <div className="card-body p-4">
             <h5 className="card-title fw-bold text-dark mb-1">Sign In to Your Account</h5>
             <p className="text-muted small mb-4">Enter your credentials to access the portal</p>
@@ -125,7 +125,7 @@ export const LoginPage = () => {
 
               <button
                 type="submit"
-                className="btn btn-success w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                className="btn login-submit w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
                 disabled={submitting}
               >
                 {submitting ? (
@@ -136,7 +136,7 @@ export const LoginPage = () => {
                 ) : (
                   <>
                     Sign In
-                    <i className="bi bi-arrow-right"></i>
+                    <i className="bi bi-arrow-right login-submit-icon"></i>
                   </>
                 )}
               </button>

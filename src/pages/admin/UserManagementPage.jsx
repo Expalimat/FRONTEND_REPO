@@ -13,7 +13,6 @@ export const UserManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [targetId, setTargetId] = useState(null);
@@ -33,13 +32,12 @@ export const UserManagementPage = () => {
     department: ''
   });
 
-  const loadUsers = async (page = 1, nextFilters = filters) => {
+  const loadUsers = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await userService.getUsers(pageParams(page, nextFilters)));
+      const result = readPage(await userService.getUsers(pageParams(page, filters)));
       setUsers(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -59,7 +57,7 @@ export const UserManagementPage = () => {
       name: '',
       email: '',
       role: 'Student',
-      studentNumber: `2026-${String(pagination.total + 1).padStart(5, '0')}`,
+      studentNumber: `2026-0000${pagination.total + 1}`,
       program: 'BS Information Technology',
       yearLevel: '1st Year',
       department: ''
@@ -96,7 +94,7 @@ export const UserManagementPage = () => {
       setShowModal(false);
       loadUsers();
     } catch (err) {
-      alert(err.message || 'Failed to save user.');
+      alert('Failed to save user.');
     }
   };
 
@@ -109,7 +107,7 @@ export const UserManagementPage = () => {
       setToggleTarget(null);
       loadUsers();
     } catch (err) {
-      alert(err.message || 'Failed to change status.');
+      alert('Failed to change status.');
     } finally {
       setProcessing(false);
     }
@@ -224,6 +222,7 @@ export const UserManagementPage = () => {
           <DataTable
             columns={columns}
             data={users}
+            serverPagination={{ ...pagination, onPageChange: loadUsers }}
             filterField="role"
             filterOptions={[
               { label: 'Student', value: 'Student' },
@@ -235,7 +234,6 @@ export const UserManagementPage = () => {
             filterPlaceholder="Filter by Role"
             searchPlaceholder="Search name, username, email or ID..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadUsers }}
           />
         </div>
       </div>

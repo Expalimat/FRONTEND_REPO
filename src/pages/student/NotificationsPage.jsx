@@ -17,7 +17,9 @@ export const NotificationsPage = () => {
   const loadPage = async (page = 1, currentFilter = filter) => {
     setLoading(true);
     try {
-      const filters = currentFilter === 'Unread' ? { filterField: 'isRead', filterValue: '0' } : {};
+      const filters = currentFilter === 'Unread'
+        ? { filterField: 'isRead', filterValue: '0' }
+        : {};
       const result = readPage(await notificationService.getUserNotifications(pageParams(page, filters)));
       setPageNotifications(result.data);
       setPagination(result);

@@ -12,19 +12,17 @@ export const RegistrarClearancePage = () => {
   const [loading, setLoading] = useState(true);
   const [clearances, setClearances] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedClearance, setSelectedClearance] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Signed' | 'Rejected'
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadClearances = async (page = 1, nextFilters = filters) => {
+  const loadClearances = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await clearanceService.getClearances(pageParams(page, nextFilters)));
+      const result = readPage(await clearanceService.getClearances(pageParams(page, filters)));
       setClearances(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -52,7 +50,7 @@ export const RegistrarClearancePage = () => {
       setSelectedClearance(null);
       loadClearances();
     } catch (err) {
-      alert(err.message || 'Failed to update clearance.');
+      alert('Failed to update clearance.');
     } finally {
       setProcessing(false);
     }
@@ -151,9 +149,9 @@ export const RegistrarClearancePage = () => {
           <DataTable
             columns={columns}
             data={clearances}
+            serverPagination={{ ...pagination, onPageChange: loadClearances }}
             searchPlaceholder="Search student name or ID..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadClearances }}
           />
         </div>
       </div>
