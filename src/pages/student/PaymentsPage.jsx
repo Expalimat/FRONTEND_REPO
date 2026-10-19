@@ -120,10 +120,6 @@ export const PaymentsPage = () => {
       setFileError('Please provide the transaction reference number.');
       return;
     }
-    if (!/^[A-Za-z0-9\- ]+$/.test(referenceNumber.trim())) {
-      setFileError('Reference number can only contain letters, numbers, spaces, and dashes.');
-      return;
-    }
     if (!selectedFile) {
       setFileError('Please attach your deposit slip or proof of payment.');
       return;
@@ -140,7 +136,7 @@ export const PaymentsPage = () => {
           paymentMethod,
           referenceNumber,
           amount,
-          proofFileName: selectedFile.name.replace(/[^\w\-. ()]/g, '_'),
+          proofFileName: selectedFile.name,
           proofFileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
         },
         currentUser
@@ -309,7 +305,7 @@ export const PaymentsPage = () => {
               </table>
             </div>
           )}
-          {payments.length > 0 && (
+          {!loading && payments.length > 0 && (
             <div className="px-3 pb-3">
               <PaginationControls {...paymentPagination} onPageChange={loadPaymentPage} />
             </div>

@@ -12,19 +12,17 @@ export const StudentRecordsPage = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentGrades, setStudentGrades] = useState([]);
   const [studentEnrollments, setStudentEnrollments] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
-  const loadStudents = async (page = 1, nextFilters = filters) => {
+  const loadStudents = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await studentService.getAllStudents(pageParams(page, nextFilters)));
+      const result = readPage(await studentService.getAllStudents(pageParams(page, filters)));
       setStudents(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -115,9 +113,9 @@ export const StudentRecordsPage = () => {
           <DataTable
             columns={columns}
             data={students}
+            serverPagination={{ ...pagination, onPageChange: loadStudents }}
             searchPlaceholder="Search by name, student number or program..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadStudents }}
           />
         </div>
       </div>

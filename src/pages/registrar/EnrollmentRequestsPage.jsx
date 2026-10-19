@@ -14,7 +14,6 @@ export const EnrollmentRequestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedEnr, setSelectedEnr] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [actionType, setActionType] = useState(null); // 'Approve' | 'Reject'
@@ -22,13 +21,12 @@ export const EnrollmentRequestsPage = () => {
   const [processing, setProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadEnrollments = async (page = 1, nextFilters = filters) => {
+  const loadEnrollments = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, nextFilters)));
+      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, filters)));
       setEnrollments(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -66,7 +64,7 @@ export const EnrollmentRequestsPage = () => {
       setShowViewModal(false);
       loadEnrollments();
     } catch (err) {
-      alert(err.message || 'Failed to update status.');
+      alert('Failed to update status.');
     } finally {
       setProcessing(false);
     }
@@ -178,6 +176,7 @@ export const EnrollmentRequestsPage = () => {
           <DataTable
             columns={columns}
             data={enrollments}
+            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
             filterField="status"
             filterOptions={[
               { label: 'Pending Approval', value: 'Pending' },
@@ -188,7 +187,6 @@ export const EnrollmentRequestsPage = () => {
             filterPlaceholder="Filter by Status"
             searchPlaceholder="Search by student name, ID or program..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
           />
         </div>
       </div>

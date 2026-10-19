@@ -32,10 +32,16 @@ backend API to be running.
 The Laravel backend must be started separately. Its local URL is normally
 `http://127.0.0.1:8000`.
 
-Administrative and student list views request records a page at a time from
-the API. Search and status/role filters are sent to the backend with each page
-request; endpoints also retain their full-list response when called without
-pagination parameters.
+Long record tables and notification, document, subject-offering, payment, and
+grade lists load their data one page at a time from the API. Table searches and
+filters are applied on the server for paginated results.
 
-
-adding line so it will redeploy...
+Students can view services and prerequisites, book available times, view their
+own references and queue estimates, check in on the appointment date, cancel
+eligible bookings, and reschedule by selecting a new time from **Appointments**.
+Registrar staff can configure service rules and capacity, close slots or dates,
+and manage check-in, queue calls, service start/completion, no-shows, and
+reasoned overrides from **Appointments & Queue**. Queue order starts
+first-checked-in, first-served; estimates are not guarantees. Open
+`/appointment-queue/display` on a public waiting-room screen to show queue
+numbers without student details.

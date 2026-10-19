@@ -10,17 +10,15 @@ export const FeeAssessmentPage = () => {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, perPage: 10, total: 0 });
-  const [filters, setFilters] = useState({});
   const [selectedEnr, setSelectedEnr] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  const loadEnrollments = async (page = 1, nextFilters = filters) => {
+  const loadEnrollments = async (page = 1, filters = {}) => {
     setLoading(true);
     try {
-      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, nextFilters)));
+      const result = readPage(await enrollmentService.getEnrollments(pageParams(page, filters)));
       setEnrollments(result.data);
       setPagination(result);
-      setFilters(nextFilters);
     } catch (err) {
       console.error(err);
     } finally {
@@ -107,9 +105,9 @@ export const FeeAssessmentPage = () => {
           <DataTable
             columns={columns}
             data={enrollments}
+            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
             searchPlaceholder="Search student, enrollment ID or program..."
             loading={loading}
-            serverPagination={{ ...pagination, onPageChange: loadEnrollments }}
           />
         </div>
       </div>
@@ -160,12 +158,6 @@ export const FeeAssessmentPage = () => {
                 <div className="d-flex justify-content-between py-1 border-bottom">
                   <span className="text-muted">Library Fee</span>
                   <span className="fw-semibold font-monospace">₱{selectedEnr.fees.library.toLocaleString()}</span>
-                </div>
-              )}
-              {selectedEnr.fees?.athletic && (
-                <div className="d-flex justify-content-between py-1 border-bottom">
-                  <span className="text-muted">Athletic Fee</span>
-                  <span className="fw-semibold font-monospace">₱{selectedEnr.fees.athletic.toLocaleString()}</span>
                 </div>
               )}
               <div className="d-flex justify-content-between pt-3 fs-5 fw-bold text-success border-top">
