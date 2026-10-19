@@ -57,6 +57,38 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.login-logo {
+  background-color: var(--pnc-primary);
+  border: 2px solid var(--pnc-secondary);
+  color: #ffffff;
+}
+
+.login-card {
+  border-top: 2px solid var(--pnc-secondary) !important;
+}
+
+.login-submit {
+  background-color: var(--pnc-primary);
+  border-color: var(--pnc-primary);
+  color: #ffffff;
+}
+
+.login-submit:hover,
+.login-submit:focus-visible {
+  background-color: var(--pnc-primary-hover);
+  border-color: var(--pnc-primary-hover);
+  color: #ffffff;
+}
+
+.login-submit:focus-visible {
+  outline: 2px solid var(--pnc-secondary);
+  outline-offset: 2px;
+}
+
+.login-submit-icon {
+  color: var(--pnc-secondary);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
