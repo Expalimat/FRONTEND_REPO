@@ -5,6 +5,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 
 // Auth
 import { LoginPage } from '../pages/auth/LoginPage';
+import { NewEnrollee } from '../pages/public/NewEnrollee';
 
 // Student
 import { StudentDashboard } from '../pages/student/StudentDashboard';
@@ -50,6 +51,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/incoming-freshman" element={<NewEnrollee />} />
       <Route path="appointment-queue/display" element={<AppointmentQueueDisplayPage />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
 

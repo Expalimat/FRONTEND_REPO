@@ -43,7 +43,6 @@ export const LoginPage = () => {
         <section className="login-visual" aria-label="Pamantasan ng Cabuyao campus">
           <div className="login-visual-image" aria-hidden="true"></div>
           <div className="login-visual-overlay">
-            <div className="login-logo login-logo-corner d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm">PnC</div>
             <div className="login-pitch">
               <p>Pamantasan ng Cabuyao: affordable, quality education that shapes Cabuyeños to be world-ready and committed to serving their community.</p>
             </div>
@@ -52,6 +51,7 @@ export const LoginPage = () => {
 
         <section className="login-panel">
           <div className="login-panel-content">
+            <div className="login-logo login-logo-panel d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm">PnC</div>
             <div className="login-panel-heading">
               <span className="login-kicker">Pamantasan ng Cabuyao</span>
               <h2>Sign In to Your Account</h2>
@@ -119,6 +119,14 @@ export const LoginPage = () => {
                     Remember my device
                   </label>
                 </div>
+              </div>
+
+              <div className="incoming-freshman-cta rounded-3 p-3 mb-4">
+                <div className="fw-semibold text-dark">Incoming Freshman? Schedule Your Enrollment Appointment Here.</div>
+                <div className="small text-muted mb-2">Not yet enrolled and don’t have a student account? Start here to schedule your enrollment appointment.</div>
+                <button type="button" className="btn btn-link p-0 fw-semibold text-success" onClick={() => navigate('/incoming-freshman')}>
+                  Start appointment <i className="bi bi-arrow-right ms-1" />
+                </button>
               </div>
 
               <button

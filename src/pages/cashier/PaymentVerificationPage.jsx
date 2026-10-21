@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { RowActionMenu } from '../../components/common/RowActionMenu';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { Modal } from '../../components/feedback/Modal';
 import { paymentService } from '../../services/paymentService';
@@ -111,9 +112,9 @@ export const PaymentVerificationPage = () => {
     {
       header: 'Action',
       render: (row) => (
-        <div className="d-flex align-items-center gap-1">
+        <div className="payment-actions d-flex align-items-center gap-1 flex-nowrap">
           <button
-            className="btn btn-xs btn-outline-primary py-1 px-2"
+            className="btn btn-xs btn-outline-primary py-1 px-2 payment-action-btn"
             onClick={() => {
               setSelectedPayment(row);
               setShowSlipModal(true);
@@ -123,28 +124,29 @@ export const PaymentVerificationPage = () => {
             <i className="bi bi-receipt me-1"></i>Slip
           </button>
           {row.status === 'Pending' && (
-            <>
-              <button
-                className="btn btn-xs btn-success py-1 px-2"
-                onClick={() => {
-                  setSelectedPayment(row);
-                  setActionType('Verified');
-                }}
-                title="Verify & Post Payment"
-              >
-                Verify
-              </button>
-              <button
-                className="btn btn-xs btn-danger py-1 px-2"
-                onClick={() => {
-                  setSelectedPayment(row);
-                  setActionType('Rejected');
-                }}
-                title="Reject Slip"
-              >
-                Reject
-              </button>
-            </>
+            <RowActionMenu
+              label={`Payment actions for ${row.id}`}
+              actions={[
+                {
+                  label: 'Verify',
+                  icon: 'bi-check-lg',
+                  variant: 'text-success',
+                  onClick: () => {
+                    setSelectedPayment(row);
+                    setActionType('Verified');
+                  }
+                },
+                {
+                  label: 'Reject',
+                  icon: 'bi-x-lg',
+                  variant: 'text-danger',
+                  onClick: () => {
+                    setSelectedPayment(row);
+                    setActionType('Rejected');
+                  }
+                }
+              ]}
+            />
           )}
         </div>
       )

@@ -139,10 +139,8 @@ body {
   width: 3.25rem;
 }
 
-.login-logo-corner {
-  left: clamp(1.25rem, 3vw, 2.5rem);
-  position: absolute;
-  top: clamp(1.25rem, 3vw, 2.5rem);
+.login-logo-panel {
+  margin-bottom: 2rem;
 }
 
 .login-panel {
@@ -150,6 +148,14 @@ body {
   flex-direction: column;
   justify-content: center;
   padding: clamp(2rem, 5vw, 4.5rem);
+  position: relative;
+}
+
+.login-logo-panel {
+  left: clamp(2rem, 5vw, 4.5rem);
+  margin: 0;
+  position: absolute;
+  top: clamp(2rem, 5vw, 4.5rem);
 }
 
 .login-panel-content {
@@ -187,6 +193,21 @@ body {
   font-size: 0.72rem;
   gap: 0.25rem;
   margin-top: 2rem;
+}
+
+.incoming-freshman-cta {
+  background: var(--pnc-primary-light);
+  border: 1px solid var(--pnc-primary-border, #b7d7c4);
+}
+
+.public-booking-page {
+  min-height: 100vh;
+  background: var(--pnc-page-bg);
+}
+
+.appointment-slot-option.selected {
+  border-color: var(--pnc-primary);
+  background: var(--pnc-primary-light);
 }
 
 .login-card {
@@ -808,6 +829,29 @@ body {
 }
 .table-pnc tbody tr:hover {
   background-color: #f8fafc;
+}
+
+.payment-actions {
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.audit-action-col {
+  min-width: 110px;
+}
+
+.audit-details-col {
+  min-width: 180px;
+}
+
+.audit-time-col {
+  min-width: 90px;
+}
+
+.table-pnc td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Status Badges */

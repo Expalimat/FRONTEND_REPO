@@ -55,8 +55,8 @@ export const RegistrarDashboard = () => {
   return (
     <div>
       <PageHeader
-        title="Registrar Operations Dashboard"
-        subtitle="Manage student admissions, enrollment approvals, grade validations, and official credentials."
+        title="Registrar Dashboard"
+        subtitle="Manage enrollments, grades, documents, and clearances."
       />
 
       {/* Work Queue Summary Cards */}
@@ -73,9 +73,9 @@ export const RegistrarDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-3">
           <DashboardCard
-            title="Grades for Validation"
+            title="Grades to Validate"
             value={pendingGrades.length}
-            subtitle="Encoded by faculty instructors"
+            subtitle="Faculty submissions"
             icon="bi-patch-check"
             color="warning"
             onClick={() => navigate('/registrar/grades')}
@@ -85,7 +85,7 @@ export const RegistrarDashboard = () => {
           <DashboardCard
             title="Document Requests"
             value={pendingDocs.length}
-            subtitle="TOR, COG, Good Moral in queue"
+            subtitle="TOR, COG, Good Moral"
             icon="bi-file-earmark-arrow-up"
             color="info"
             onClick={() => navigate('/registrar/documents')}
@@ -95,7 +95,7 @@ export const RegistrarDashboard = () => {
           <DashboardCard
             title="Clearance Queue"
             value={pendingRegistrarClearance.length}
-            subtitle="Pending Registrar signoff"
+            subtitle="Registrar review"
             icon="bi-clipboard-check"
             color="purple"
             onClick={() => navigate('/registrar/clearance')}

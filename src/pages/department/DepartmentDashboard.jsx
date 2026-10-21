@@ -50,17 +50,17 @@ export const DepartmentDashboard = () => {
   return (
     <div>
       <PageHeader
-        title="Department Faculty & Dean Portal"
-        subtitle="College of Computing Studies &bull; Manage subject sections, encode student grades, and clear academic accountabilities."
+        title="Department Dashboard"
+        subtitle="Manage subjects, grades, and clearances."
       />
 
       {/* Dashboard Stat Cards */}
       <div className="row g-3 mb-4">
         <div className="col-sm-6 col-xl-4">
           <DashboardCard
-            title="Active Subject Offerings"
+            title="Active Subjects"
             value={totalSections}
-            subtitle="Open & full class sections"
+            subtitle="Open and full sections"
             icon="bi-book"
             color="primary"
             onClick={() => navigate('/department/subjects')}
@@ -68,7 +68,7 @@ export const DepartmentDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-4">
           <DashboardCard
-            title="Encoded Grade Entries"
+            title="Encoded Grades"
             value={totalEncodedGrades}
             subtitle="Submitted to Registrar"
             icon="bi-keyboard"
@@ -78,9 +78,9 @@ export const DepartmentDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-4">
           <DashboardCard
-            title="Pending Department Clearance"
+            title="Department Clearance"
             value={pendingDeptClearance.length}
-            subtitle="Awaiting laboratory signoff"
+            subtitle="Lab review"
             icon="bi-clipboard-check"
             color="info"
             onClick={() => navigate('/department/clearance')}

@@ -47,8 +47,8 @@ export const AdminDashboard = () => {
   return (
     <div>
       <PageHeader
-        title="System Administration & Security"
-        subtitle="Manage user accounts, monitor system-wide audit trails, and configure academic parameters."
+        title="Admin & Security"
+        subtitle="Manage accounts, audit logs, and settings."
       />
 
       {/* System Status Banner */}
@@ -73,7 +73,7 @@ export const AdminDashboard = () => {
       <div className="row g-3 mb-4">
         <div className="col-sm-6 col-xl-3">
           <DashboardCard
-            title="Total Registered Users"
+            title="Total Users"
             value={users.length}
             subtitle="Active system accounts"
             icon="bi-people-fill"
@@ -93,7 +93,7 @@ export const AdminDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-3">
           <DashboardCard
-            title="Administrative Staff"
+            title="Staff Users"
             value={registrarCount + cashierCount + deptCount}
             subtitle="Registrar, Cashier, Dept"
             icon="bi-person-badge-fill"
@@ -103,9 +103,9 @@ export const AdminDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-3">
           <DashboardCard
-            title="Audit Trail Events"
+            title="Audit Events"
             value={auditLogs.length}
-            subtitle="Logged security events"
+            subtitle="Security logs"
             icon="bi-shield-check"
             color="purple"
             onClick={() => navigate('/admin/audit-logs')}
@@ -131,10 +131,10 @@ export const AdminDashboard = () => {
                 <tr>
                   <th>Log ID</th>
                   <th>User / Actor</th>
-                  <th>Action Performed</th>
+                  <th className="audit-action-col">Action</th>
                   <th>Module</th>
-                  <th>Details</th>
-                  <th>Timestamp</th>
+                  <th className="audit-details-col">Details</th>
+                  <th className="audit-time-col">Time</th>
                 </tr>
               </thead>
               <tbody>
