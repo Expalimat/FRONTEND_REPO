@@ -23,7 +23,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { to: '/student/schedule', icon: 'bi-calendar-week', label: 'My Schedule' },
           { to: '/student/payments', icon: 'bi-credit-card-2-front', label: 'Payments' },
           { to: '/student/clearance', icon: 'bi-clipboard-check', label: 'Clearance' },
-          { to: '/student/appointments', icon: 'bi-calendar2-check', label: 'Appointments' },
+          { to: '/student/queue', icon: 'bi-people', label: 'Virtual Queue' },
           { to: '/student/grades', icon: 'bi-mortarboard', label: 'Grades' },
           { to: '/student/documents', icon: 'bi-file-earmark-text', label: 'Document Requests' },
           { to: '/student/notifications', icon: 'bi-bell', label: 'Notifications', badge: unreadCount },
@@ -38,7 +38,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { to: '/registrar/grades', icon: 'bi-patch-check', label: 'Grade Validation' },
           { to: '/registrar/clearance', icon: 'bi-clipboard-check', label: 'Clearance' },
           { to: '/registrar/documents', icon: 'bi-file-earmark-arrow-up', label: 'Document Requests' },
-          { to: '/registrar/appointments', icon: 'bi-calendar2-check', label: 'Appointments & Queue' }
+          { to: '/registrar/queue', icon: 'bi-people', label: 'Virtual Queue' }
         ];
 
       case 'Cashier':
@@ -55,7 +55,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { to: '/department/subjects', icon: 'bi-book', label: 'Subject Offerings' },
           { to: '/department/grades', icon: 'bi-keyboard', label: 'Grade Encoding' },
           { to: '/department/clearance', icon: 'bi-clipboard-check', label: 'Clearance' },
-          { to: '/department/appointments', icon: 'bi-calendar2-check', label: 'Appointments & Queue' }
+          { to: '/department/queue', icon: 'bi-people', label: 'Virtual Queue' }
         ];
 
       case 'Administrator':
@@ -64,7 +64,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { to: '/admin/users', icon: 'bi-person-gear', label: 'User Management' },
           { to: '/admin/audit-logs', icon: 'bi-shield-check', label: 'Audit Logs' },
           { to: '/admin/settings', icon: 'bi-sliders', label: 'System Settings' },
-          { to: '/admin/appointments', icon: 'bi-calendar2-check', label: 'Appointments & Queue' }
+          { to: '/admin/queue', icon: 'bi-people', label: 'Virtual Queue' }
         ];
 
       default:

@@ -12,7 +12,6 @@ import { clearanceService } from '../../services/clearanceService';
 import { documentService } from '../../services/documentService';
 import { gradeService } from '../../services/gradeService';
 import { isEnrollmentCompleted } from '../../services/enrollmentService';
-import { appointmentService } from '../../services/appointmentService';
 
 export const StudentDashboard = () => {
   const { currentUser } = useAuth();
@@ -24,27 +23,24 @@ export const StudentDashboard = () => {
   const [clearance, setClearance] = useState(null);
   const [documentRequests, setDocumentRequests] = useState([]);
   const [grades, setGrades] = useState([]);
-  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const studentNo = currentUser?.studentNumber || '2026-00001';
-        const [enrData, payData, clrData, docData, grdData, apptData] = await Promise.all([
+        const [enrData, payData, clrData, docData, grdData] = await Promise.all([
           enrollmentService.getEnrollmentByStudent(studentNo),
           paymentService.getPaymentsByStudent(studentNo),
           clearanceService.getClearanceByStudent(studentNo),
           documentService.getRequestsByStudent(studentNo),
-          gradeService.getGradesByStudent(studentNo),
-          appointmentService.getAppointments()
+          gradeService.getGradesByStudent(studentNo)
         ]);
         setEnrollments(enrData);
         setPayments(payData);
         setClearance(clrData);
         setDocumentRequests(docData);
         setGrades(grdData);
-        setAppointments(apptData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -64,7 +60,6 @@ export const StudentDashboard = () => {
     : latestEnrollmentRecord;
   const latestPayment = payments[0];
   const pendingDocsCount = documentRequests.filter((d) => d.status !== 'Released' && d.status !== 'Rejected').length;
-  const upcomingAppointment = appointments.find((appointment) => ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'WAITING', 'SERVING'].includes(appointment.status));
 
   return (
     <div>
@@ -187,37 +182,14 @@ export const StudentDashboard = () => {
               </Link>
             </div>
             <div className="dashboard-quick-action-item">
-              <Link to="/student/appointments" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
-                <i className="bi bi-calendar2-check fs-3"></i>
-                <span className="small fw-semibold">Appointments</span>
+              <Link to="/student/queue" className="btn btn-outline-success student-quick-action w-100 py-3 text-center d-flex flex-column align-items-center gap-2">
+                <i className="bi bi-people fs-3"></i>
+                <span className="small fw-semibold">Join Virtual Queue</span>
               </Link>
             </div>
           </div>
         </div>
       </div>
-
-      <section className="pnc-card mb-4">
-        <div className="pnc-card-header d-flex justify-content-between align-items-center">
-          <span><i className="bi bi-calendar2-check text-success me-2"></i>Upcoming appointment</span>
-          <Link to="/student/appointments" className="btn btn-sm btn-outline-primary">View appointments</Link>
-        </div>
-        <div className="pnc-card-body">
-          {upcomingAppointment ? (
-            <div className="row g-3">
-              <div className="col-md-3"><div className="small text-muted">Reference</div><strong>{upcomingAppointment.appointmentNumber}</strong></div>
-              <div className="col-md-3"><div className="small text-muted">Service</div><span>{upcomingAppointment.serviceName}</span></div>
-              <div className="col-md-3"><div className="small text-muted">Date &amp; time</div><span>{upcomingAppointment.appointmentDate}, {upcomingAppointment.startTime}–{upcomingAppointment.endTime}</span></div>
-              <div className="col-md-3"><div className="small text-muted">Status</div><StatusBadge status={upcomingAppointment.status} /></div>
-              {upcomingAppointment.instructions && <div className="col-12"><div className="alert alert-light border mb-0">{upcomingAppointment.instructions}</div></div>}
-            </div>
-          ) : (
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-              <span className="text-muted">You have no upcoming appointments.</span>
-              <Link to="/student/appointments" className="btn btn-pnc-primary">Book an appointment</Link>
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Main Two-Column Layout */}
       <div className="row g-4">

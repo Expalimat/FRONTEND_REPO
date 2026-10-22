@@ -36,18 +36,13 @@ Long record tables and notification, document, subject-offering, payment, and
 grade lists load their data one page at a time from the API. Table searches and
 filters are applied on the server for paginated results.
 
-Students can view services and prerequisites, book available times, view their
-own references and queue estimates, cancel eligible bookings, and reschedule
-by selecting a new time from **Appointments**. CTC students can also join a
-virtual queue without an appointment, track their ticket, and cancel while
-waiting. Incoming freshmen can retain the existing appointment flow and use
-the separate guest queue page only when an administrator enables queue intake
-for a public-bookable service. Guest ticket retrieval requires a private access
-code shown once at ticket creation; the ticket number alone is insufficient.
-Registrar staff can
-configure service rules and capacity, pause or resume queue intake, close
-slots or dates, and manage check-in, queue calls, service start/completion,
-no-shows, and reasoned overrides from **Appointments & Queue**. Queue order is
-first-in, first-called; estimates are not guarantees. Open
-`/appointment-queue/display` on a public waiting-room screen to show queue
-numbers without student details.
+Students can join an enabled virtual queue, track their ticket and estimated
+wait, and cancel while waiting from **Virtual Queue**. Incoming freshmen can
+join only queues that an administrator explicitly enables for public guest
+access. Guest ticket retrieval requires the private access code shown once at
+ticket creation; the ticket number alone is insufficient. Registrar and
+department staff can call, start, recall, complete, cancel, or mark queue
+tickets as no-shows. Administrators can configure queue services, capacity,
+and public guest access, and pause or resume intake. Queue order is first-in,
+first-called; estimates are not guarantees. Open `/queue/display` on a public
+waiting-room screen to show the current queue without student details.
