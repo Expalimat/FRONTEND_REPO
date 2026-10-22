@@ -7,6 +7,8 @@ export const appointmentService = {
   getServices: async () => responseData(await api.get('/appointment-services')),
   createService: async (data) => responseData(await api.post('/appointment-services', data)),
   updateService: async (id, data) => responseData(await api.put(`/appointment-services/${id}`, data)),
+  setQueuePause: async (serviceId, queuePaused) =>
+    responseData(await api.patch(`/staff/appointment-services/${serviceId}/queue-pause`, { queuePaused })),
   getClosures: async (serviceId) => responseData(await api.get(`/appointment-services/${serviceId}/closures`)),
   closeDate: async (serviceId, data) =>
     responseData(await api.post(`/appointment-services/${serviceId}/closures`, data)),
@@ -19,6 +21,12 @@ export const appointmentService = {
     responseData(await api.post(`/appointment-services/${serviceId}/slots`, data)),
   updateSlot: async (slotId, data) => responseData(await api.patch(`/appointment-slots/${slotId}`, data)),
   getAppointments: async (params = {}) => responseData(await api.get('/appointments', { params })),
+  getVirtualQueueServices: async () => responseData(await api.get('/student/virtual-queue/services')),
+  getMyVirtualQueueTickets: async () => responseData(await api.get('/student/virtual-queue/tickets')),
+  joinVirtualQueue: async (serviceId) =>
+    responseData(await api.post('/student/virtual-queue/tickets', { serviceId })),
+  cancelVirtualQueueTicket: async (queueEntryId) =>
+    responseData(await api.patch(`/student/virtual-queue/tickets/${queueEntryId}/cancel`)),
   book: async (data) => responseData(await api.post('/appointments', data)),
   cancel: async (id, reason) =>
     responseData(await api.patch(`/appointments/${id}/cancel`, reason ? { reason } : {})),
@@ -32,6 +40,15 @@ export const appointmentService = {
   recall: async (id) => responseData(await api.patch(`/appointments/${id}/recall`)),
   finish: async (id, status, staffNotes = '') =>
     responseData(await api.patch(`/appointments/${id}/finish`, { status, reason: staffNotes })),
+  callQueueEntry: async (id) => responseData(await api.post(`/staff/queue/${id}/call`)),
+  overrideQueueEntry: async (id, reason) =>
+    responseData(await api.post(`/staff/queue/${id}/override`, { reason })),
+  startQueueEntry: async (id) => responseData(await api.post(`/staff/queue/${id}/start`)),
+  recallQueueEntry: async (id) => responseData(await api.post(`/staff/queue/${id}/recall`)),
+  finishQueueEntry: async (id, status, reason = '') =>
+    responseData(await api.post(`/staff/queue/${id}/${status === 'NO_SHOW' ? 'no-show' : 'complete'}`, { reason })),
+  cancelQueueEntry: async (id, reason = '') =>
+    responseData(await api.post(`/staff/queue/${id}/cancel`, { reason })),
   getAppointment: async (id) => responseData(await api.get(`/appointments/${id}`)),
   getHistory: async (id) => responseData(await api.get(`/appointments/${id}/history`)),
   getPublicQueue: async () => responseData(await api.get('/appointment-queue/display'))
