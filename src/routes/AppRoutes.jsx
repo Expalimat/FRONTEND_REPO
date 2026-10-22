@@ -5,7 +5,6 @@ import { AppLayout } from '../components/layout/AppLayout';
 
 // Auth
 import { LoginPage } from '../pages/auth/LoginPage';
-import { NewEnrollee } from '../pages/public/NewEnrollee';
 import { GuestVirtualQueue } from '../pages/public/GuestVirtualQueue';
 
 // Student
@@ -18,7 +17,7 @@ import { GradesPage } from '../pages/student/GradesPage';
 import { DocumentRequestsPage } from '../pages/student/DocumentRequestsPage';
 import { NotificationsPage } from '../pages/student/NotificationsPage';
 import { ProfilePage } from '../pages/student/ProfilePage';
-import { AppointmentsPage } from '../pages/student/AppointmentsPage';
+import { VirtualQueuePage } from '../pages/student/VirtualQueuePage';
 
 // Registrar
 import { RegistrarDashboard } from '../pages/registrar/RegistrarDashboard';
@@ -45,16 +44,16 @@ import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { UserManagementPage } from '../pages/admin/UserManagementPage';
 import { AuditLogsPage } from '../pages/admin/AuditLogsPage';
 import { SystemSettingsPage } from '../pages/admin/SystemSettingsPage';
-import { AppointmentManagementPage } from '../pages/registrar/AppointmentManagementPage';
-import { AppointmentQueueDisplayPage } from '../pages/queue/AppointmentQueueDisplayPage';
+import { QueueManagementPage } from '../pages/registrar/QueueManagementPage';
+import { QueueDisplayPage } from '../pages/queue/QueueDisplayPage';
 
 export const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/incoming-freshman" element={<NewEnrollee />} />
+      <Route path="/incoming-freshman" element={<Navigate to="/incoming-freshman/queue" replace />} />
       <Route path="/incoming-freshman/queue" element={<GuestVirtualQueue />} />
-      <Route path="appointment-queue/display" element={<AppointmentQueueDisplayPage />} />
+      <Route path="queue/display" element={<QueueDisplayPage />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Student Protected Routes */}
@@ -69,7 +68,7 @@ export const AppRoutes = () => {
           <Route path="student/documents" element={<DocumentRequestsPage />} />
           <Route path="student/notifications" element={<NotificationsPage />} />
           <Route path="student/profile" element={<ProfilePage />} />
-          <Route path="student/appointments" element={<AppointmentsPage />} />
+          <Route path="student/queue" element={<VirtualQueuePage />} />
         </Route>
       </Route>
 
@@ -82,7 +81,7 @@ export const AppRoutes = () => {
           <Route path="registrar/grades" element={<GradeValidationPage />} />
           <Route path="registrar/clearance" element={<RegistrarClearancePage />} />
           <Route path="registrar/documents" element={<DocumentRequestsQueuePage />} />
-          <Route path="registrar/appointments" element={<AppointmentManagementPage />} />
+          <Route path="registrar/queue" element={<QueueManagementPage />} />
         </Route>
       </Route>
 
@@ -103,7 +102,7 @@ export const AppRoutes = () => {
           <Route path="department/subjects" element={<SubjectOfferingsPage />} />
           <Route path="department/grades" element={<GradeEncodingPage />} />
           <Route path="department/clearance" element={<DepartmentClearancePage />} />
-          <Route path="department/appointments" element={<AppointmentManagementPage dashboardPath="/department/dashboard" />} />
+          <Route path="department/queue" element={<QueueManagementPage dashboardPath="/department/dashboard" />} />
         </Route>
       </Route>
 
@@ -114,7 +113,7 @@ export const AppRoutes = () => {
           <Route path="admin/users" element={<UserManagementPage />} />
           <Route path="admin/audit-logs" element={<AuditLogsPage />} />
           <Route path="admin/settings" element={<SystemSettingsPage />} />
-          <Route path="admin/appointments" element={<AppointmentManagementPage dashboardPath="/admin/dashboard" />} />
+          <Route path="admin/queue" element={<QueueManagementPage dashboardPath="/admin/dashboard" />} />
         </Route>
       </Route>
 

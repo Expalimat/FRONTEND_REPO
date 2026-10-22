@@ -233,14 +233,9 @@ body {
   border: 1px solid var(--pnc-primary-border, #b7d7c4);
 }
 
-.public-booking-page {
+.public-queue-page {
   min-height: 100vh;
   background: var(--pnc-page-bg);
-}
-
-.appointment-slot-option.selected {
-  border-color: var(--pnc-primary);
-  background: var(--pnc-primary-light);
 }
 
 .login-card {
@@ -269,52 +264,7 @@ body {
   color: var(--pnc-secondary);
 }
 
-.appointment-slot-option {
-  align-items: flex-start;
-  border: 1px solid var(--pnc-border-color);
-  border-radius: 0.65rem;
-  cursor: pointer;
-  display: flex;
-  gap: 0.7rem;
-  height: 100%;
-  padding: 0.8rem;
-  transition: border-color 160ms ease, background-color 160ms ease;
-}
-
-.appointment-slot-option:hover,
-.appointment-slot-option.selected {
-  background: var(--pnc-primary-light);
-  border-color: var(--pnc-primary);
-}
-
-.appointment-slot-option:has(input:disabled) {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.appointment-date-filter {
-  max-width: 220px;
-}
-
-.appointment-queue-now {
-  align-items: center;
-  background: var(--pnc-primary-light);
-  border: 1px solid var(--pnc-primary-border-subtle, #b7d7c4);
-  border-radius: 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-}
-
-.appointment-queue-current {
-  color: var(--pnc-primary);
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-.appointment-display-page {
+.queue-display-page {
   align-items: center;
   background: #0d3f2a;
   color: #ffffff;
@@ -325,20 +275,20 @@ body {
   padding: clamp(1rem, 4vw, 3rem);
 }
 
-.appointment-display-header {
+.queue-display-header {
   margin-bottom: clamp(2rem, 6vh, 4rem);
   position: relative;
   text-align: center;
   width: 100%;
 }
 
-.appointment-display-back {
+.queue-display-back {
   left: 0;
   position: absolute;
   top: 0;
 }
 
-.appointment-display-brand {
+.queue-display-brand {
   color: #e2c65e;
   font-size: 0.8rem;
   font-weight: 700;
@@ -346,18 +296,18 @@ body {
   text-transform: uppercase;
 }
 
-.appointment-display-header h1 {
+.queue-display-header h1 {
   font-size: clamp(2.25rem, 6vw, 4.5rem);
   font-weight: 800;
   margin: 0.5rem 0;
 }
 
-.appointment-display-header p {
+.queue-display-header p {
   color: rgba(255, 255, 255, 0.72);
   font-size: clamp(1rem, 2vw, 1.35rem);
 }
 
-.appointment-display-clock {
+.queue-display-clock {
   color: #ffffff;
   display: block;
   font-size: clamp(1.1rem, 2.5vw, 1.65rem);
@@ -365,14 +315,14 @@ body {
   margin-top: 0.75rem;
 }
 
-.appointment-display-scope {
+.queue-display-scope {
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.9rem;
   margin: 0.5rem auto 0;
   max-width: 680px;
 }
 
-.appointment-display-services {
+.queue-display-services {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
@@ -380,7 +330,7 @@ body {
   width: 100%;
 }
 
-.appointment-display-service {
+.queue-display-service {
   background: #ffffff;
   border-radius: 1rem;
   color: var(--pnc-dark);
@@ -389,19 +339,19 @@ body {
   text-align: center;
 }
 
-.appointment-display-service-name {
+.queue-display-service-name {
   color: var(--pnc-primary);
   font-size: clamp(1.2rem, 3vw, 1.75rem);
   font-weight: 700;
 }
 
-.appointment-display-service-code {
+.queue-display-service-code {
   color: var(--pnc-text-muted);
   font-size: 0.8rem;
   margin-top: 0.35rem;
 }
 
-.appointment-display-number {
+.queue-display-number {
   color: var(--pnc-primary);
   font-size: clamp(4rem, 12vw, 8rem);
   font-weight: 800;
@@ -410,33 +360,11 @@ body {
   margin: 1rem 0 0.5rem;
 }
 
-.appointment-display-waiting,
-.appointment-display-footer {
+.queue-display-waiting {
   color: var(--pnc-text-muted);
 }
 
-.appointment-display-booking-capacity {
-  color: var(--pnc-primary);
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-top: 0.75rem;
-}
-
-.appointment-display-booking-slot {
-  font-size: 0.85rem;
-  margin-top: 0.3rem;
-}
-
-.appointment-display-footer {
-  color: rgba(255, 255, 255, 0.7);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.appointment-display-error {
+.queue-display-error {
   max-width: 600px;
   width: 100%;
 }
