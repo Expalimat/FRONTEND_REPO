@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { publicAppointmentService } from '../../services/publicAppointmentService';
+import { publicVirtualQueueService } from '../../services/publicVirtualQueueService';
 
 const initialApplicant = { applicant_name: '', applicant_email: '', applicant_phone: '' };
 const activeStatuses = ['WAITING', 'CALLED', 'SERVING'];
@@ -29,13 +29,13 @@ export const GuestVirtualQueue = () => {
 
   useEffect(() => {
     let active = true;
-    publicAppointmentService.getGuestQueueServices()
+    publicVirtualQueueService.getGuestQueueServices()
       .then((items) => {
         if (!active) return;
         setServices(items);
         setServiceId(items[0]?.id ?? '');
       })
-      .catch((err) => active && setError(err.message || 'Unable to load available enrollment queues.'))
+      .catch((err) => active && setError(err.message || 'Unable to load available public queues.'))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, []);
@@ -47,7 +47,7 @@ export const GuestVirtualQueue = () => {
     let timeoutId;
     const poll = async () => {
       try {
-        const result = await publicAppointmentService.retrieveGuestQueueTicket({
+        const result = await publicVirtualQueueService.retrieveGuestQueueTicket({
           ticket_number: ticket.queueTicket,
           access_token: accessToken,
         });
@@ -76,7 +76,7 @@ export const GuestVirtualQueue = () => {
     setError('');
     setNotice('');
     try {
-      const result = await publicAppointmentService.joinGuestQueue({
+      const result = await publicVirtualQueueService.joinGuestQueue({
         service_id: serviceId,
         ...applicant,
       });
@@ -85,7 +85,7 @@ export const GuestVirtualQueue = () => {
       setLastUpdated(new Date());
       setNotice('Your ticket is ready. Save the private access code below so you can retrieve it later.');
     } catch (err) {
-      setError(err.message || 'Unable to join this enrollment queue.');
+      setError(err.message || 'Unable to join this public queue.');
     } finally {
       setSubmitting(false);
     }
@@ -97,7 +97,7 @@ export const GuestVirtualQueue = () => {
     setError('');
     setNotice('');
     try {
-      const result = await publicAppointmentService.retrieveGuestQueueTicket(lookup);
+      const result = await publicVirtualQueueService.retrieveGuestQueueTicket(lookup);
       setTicket(result.ticket);
       setAccessToken(lookup.access_token);
       setLastUpdated(new Date());
@@ -114,7 +114,7 @@ export const GuestVirtualQueue = () => {
     setSubmitting(true);
     setError('');
     try {
-      const result = await publicAppointmentService.cancelGuestQueueTicket({
+      const result = await publicVirtualQueueService.cancelGuestQueueTicket({
         ticket_number: ticket.queueTicket,
         access_token: accessToken,
       });
@@ -140,20 +140,19 @@ export const GuestVirtualQueue = () => {
   const selectedService = services.find((service) => String(service.id) === String(serviceId));
 
   return (
-    <main className="public-booking-page py-4 py-md-5">
+    <main className="public-queue-page py-4 py-md-5">
       <div className="container" style={{ maxWidth: 850 }}>
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
           <Link to="/login" className="text-decoration-none text-muted">
             <i className="bi bi-arrow-left me-2" />Return to main login
           </Link>
-          <Link to="/incoming-freshman" className="text-decoration-none">Schedule an appointment</Link>
         </div>
         <div className="card border-0 shadow-sm mt-3">
           <div className="card-body p-3 p-sm-4 p-md-5">
             <span className="login-kicker">Pamantasan ng Cabuyao</span>
             <h1 className="h3 fw-bold mt-2">Incoming Freshman Virtual Queue</h1>
             <p className="text-muted">
-              Join only an enrollment service that is enabled for public queue access. A queue ticket does not mean
+              Join only a service that an administrator has enabled for public queue access. A queue ticket does not mean
               that you have been admitted or enrolled.
             </p>
 
@@ -162,7 +161,7 @@ export const GuestVirtualQueue = () => {
             {connectionError && <div className="alert alert-warning" role="status">{connectionError}</div>}
 
             {loading ? (
-              <p className="text-muted mb-0">Loading enrollment queues…</p>
+              <p className="text-muted mb-0">Loading public queues…</p>
             ) : (
               <>
                 {ticket && (
@@ -180,7 +179,7 @@ export const GuestVirtualQueue = () => {
                   <>
                     {services.length > 0 ? (
                       <form onSubmit={joinQueue} className="border rounded-3 p-3 p-md-4 mb-4">
-                        <h2 className="h5">Join an enrollment queue</h2>
+                        <h2 className="h5">Join a queue</h2>
                         <div className="mb-3">
                           <label className="form-label fw-semibold" htmlFor="guest-service">Available service</label>
                           <select
@@ -236,8 +235,7 @@ export const GuestVirtualQueue = () => {
                       </form>
                     ) : (
                       <div className="alert alert-light border">
-                        Incoming-freshman virtual queue access is not currently enabled. You can still{' '}
-                        <Link to="/incoming-freshman">schedule an enrollment appointment</Link>.
+                        Incoming-freshman virtual queue access is not currently enabled. Please check back when an administrator opens a queue for public access.
                       </div>
                     )}
 
@@ -280,7 +278,7 @@ const TicketCard = ({ ticket, accessToken, lastUpdated, onCopyAccessCode, onCanc
       </div>
       <dl className="row mt-3 mb-0">
         <dt className="col-5 col-sm-4">Service</dt><dd className="col-7 col-sm-8">{ticket.serviceName}</dd>
-        <dt className="col-5 col-sm-4">Queue date</dt><dd className="col-7 col-sm-8">{ticket.appointmentDate}</dd>
+        <dt className="col-5 col-sm-4">Queue date</dt><dd className="col-7 col-sm-8">{ticket.queueDate}</dd>
         {isWaiting && <>
           <dt className="col-5 col-sm-4">People ahead</dt><dd className="col-7 col-sm-8">{ticket.eligiblePeopleAhead ?? 0}</dd>
           <dt className="col-5 col-sm-4">Queue position</dt><dd className="col-7 col-sm-8">{ticket.queuePosition ?? '—'}</dd>
