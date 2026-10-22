@@ -175,6 +175,24 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
     }
   };
 
+  const deleteService = async () => {
+    if (!selectedService) return;
+    if (!window.confirm(`Delete "${selectedService.name}"? This cannot be undone.`)) return;
+    setSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await virtualQueueService.deleteService(selectedService.id);
+      setNotice('Queue service deleted.');
+      setSelectedServiceId('');
+      await loadServices();
+    } catch (err) {
+      setError(err.message || 'Unable to delete queue service.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const togglePause = async () => {
     if (!selectedService) return;
     setSaving(true);
@@ -275,6 +293,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
                     <button type="button" className="btn btn-outline-secondary" onClick={() => { setSelectedServiceId(''); setServiceForm(emptyService); setCreatingService(true); setEditingService(true); }}>
                       New service
                     </button>
+                    <button type="button" className="btn btn-outline-danger" onClick={deleteService} disabled={saving}>Delete service</button>
                   </>
                 )}
               </div>
