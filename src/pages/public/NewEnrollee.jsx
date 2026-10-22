@@ -51,7 +51,10 @@ export const NewEnrollee = () => {
 
   if (step === 3 && confirmation) return <Confirmation confirmation={confirmation} />;
   return <div className="public-booking-page py-4 py-md-5"><div className="container" style={{ maxWidth: 850 }}>
-    <Link to="/login" className="text-decoration-none text-muted"><i className="bi bi-arrow-left me-2" />Return to main login</Link>
+    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <Link to="/login" className="text-decoration-none text-muted"><i className="bi bi-arrow-left me-2" />Return to main login</Link>
+      <Link to="/incoming-freshman/queue" className="btn btn-outline-success">Join a virtual queue</Link>
+    </div>
     <div className="card border-0 shadow-sm mt-3"><div className="card-body p-4 p-md-5">
       <span className="login-kicker">Pamantasan ng Cabuyao</span><h1 className="h3 fw-bold mt-2">Incoming Freshman Enrollment Appointment</h1>
       <p className="text-muted">Schedule an enrollment appointment before you have a student account. Booking an appointment does not mean that you have been admitted or enrolled.</p>

@@ -36,6 +36,7 @@ export const AppointmentsPage = () => {
   const [queueServices, setQueueServices] = useState([]);
   const [queueTickets, setQueueTickets] = useState([]);
   const [queueUpdatedAt, setQueueUpdatedAt] = useState(null);
+  const [queueConnectionError, setQueueConnectionError] = useState('');
   const [documents, setDocuments] = useState([]);
   const [serviceId, setServiceId] = useState('');
   const [slotId, setSlotId] = useState('');
@@ -65,18 +66,26 @@ export const AppointmentsPage = () => {
       setQueueServices(serviceList);
       setQueueTickets(tickets);
       setQueueUpdatedAt(new Date());
+      setQueueConnectionError('');
     } catch (err) {
-      setError(err.message || 'Unable to refresh your virtual queue ticket.');
+      setQueueConnectionError(err.message || 'Unable to refresh your virtual queue ticket. Retrying automatically.');
     }
   }, []);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      loadAppointments();
-      loadVirtualQueue();
-    }, 10000);
-    return () => window.clearInterval(intervalId);
-  }, [loadAppointments, loadVirtualQueue]);
+    if (loading) return undefined;
+    let active = true;
+    let timeoutId;
+    const refresh = async () => {
+      await Promise.all([loadAppointments(), loadVirtualQueue()]);
+      if (active) timeoutId = window.setTimeout(refresh, 10000);
+    };
+    timeoutId = window.setTimeout(refresh, 10000);
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadAppointments, loadVirtualQueue, loading]);
 
   useEffect(() => {
     const load = async () => {
@@ -246,6 +255,7 @@ export const AppointmentsPage = () => {
       />
 
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      {queueConnectionError && <div className="alert alert-warning" role="status">{queueConnectionError}</div>}
       {notice && (
         <div className="alert alert-success alert-dismissible" role="status">
           {notice}
@@ -262,6 +272,11 @@ export const AppointmentsPage = () => {
             <div className="alert alert-info" role="status">
               <div className="fw-semibold">Your active ticket: {activeQueueTicket.queueTicket}</div>
               <div>{activeQueueTicket.serviceName} · {activeQueueTicket.queueStatus?.replaceAll('_', ' ')}</div>
+              {activeQueueTicket.queueStatus === 'CALLED' && (
+                <div className="alert alert-warning mt-2 mb-0" role="alert">
+                  Your ticket has been called. Please proceed to the service counter.
+                </div>
+              )}
               {activeQueueTicket.queueStatus === 'WAITING' && (
                 <div className="small mt-1">
                   Position {activeQueueTicket.queuePosition ?? '—'} · {activeQueueTicket.eligiblePeopleAhead ?? 0} people ahead · estimated wait {activeQueueTicket.estimatedWaitMinutes ?? 0} min (estimate only)
@@ -269,6 +284,9 @@ export const AppointmentsPage = () => {
               )}
               {queueServices.find((service) => service.id === activeQueueTicket.serviceId)?.instructions && (
                 <div className="small mt-1">{queueServices.find((service) => service.id === activeQueueTicket.serviceId).instructions}</div>
+              )}
+              {activeQueueTicket.queuePaused && (
+                <div className="small text-warning-emphasis mt-1">New ticket intake is paused; your current ticket remains active.</div>
               )}
               {activeQueueTicket.queueStatus === 'WAITING' && (
                 <button

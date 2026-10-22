@@ -131,10 +131,10 @@ export const LoginPage = () => {
               </div>
 
               <div className="incoming-freshman-cta rounded-3 p-3 mb-4">
-                <div className="fw-semibold text-dark">Incoming Freshman? Schedule Your Enrollment Appointment Here.</div>
-                <div className="small text-muted mb-2">Not yet enrolled and don’t have a student account? Start here to schedule your enrollment appointment.</div>
-                <button type="button" className="btn btn-link p-0 fw-semibold text-success" onClick={() => navigate('/incoming-freshman')}>
-                  Start appointment <i className="bi bi-arrow-right ms-1" />
+                <div className="fw-semibold text-dark">New Enrollee? Access Enrollment Services</div>
+                <div className="small text-muted mb-2">Schedule an appointment or join an enrollment queue enabled for public access.</div>
+                <button type="button" className="btn btn-link p-0 fw-semibold text-success" onClick={() => navigate('/incoming-freshman/queue')}>
+                  Access enrollment queue <i className="bi bi-arrow-right ms-1" />
                 </button>
               </div>
 

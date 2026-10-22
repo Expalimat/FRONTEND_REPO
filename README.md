@@ -40,7 +40,11 @@ Students can view services and prerequisites, book available times, view their
 own references and queue estimates, cancel eligible bookings, and reschedule
 by selecting a new time from **Appointments**. CTC students can also join a
 virtual queue without an appointment, track their ticket, and cancel while
-waiting; freshman enrollment remains appointment-only. Registrar staff can
+waiting. Incoming freshmen can retain the existing appointment flow and use
+the separate guest queue page only when an administrator enables queue intake
+for a public-bookable service. Guest ticket retrieval requires a private access
+code shown once at ticket creation; the ticket number alone is insufficient.
+Registrar staff can
 configure service rules and capacity, pause or resume queue intake, close
 slots or dates, and manage check-in, queue calls, service start/completion,
 no-shows, and reasoned overrides from **Appointments & Queue**. Queue order is
