@@ -152,10 +152,8 @@ body {
 }
 
 .login-logo-panel {
-  left: clamp(2rem, 5vw, 4.5rem);
-  margin: 0;
-  position: absolute;
-  top: clamp(2rem, 5vw, 4.5rem);
+  margin: 0 0 1rem;
+  position: static;
 }
 
 .login-panel-content {
@@ -359,6 +357,21 @@ body {
   font-size: clamp(1rem, 2vw, 1.35rem);
 }
 
+.appointment-display-clock {
+  color: #ffffff;
+  display: block;
+  font-size: clamp(1.1rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  margin-top: 0.75rem;
+}
+
+.appointment-display-scope {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+  margin: 0.5rem auto 0;
+  max-width: 680px;
+}
+
 .appointment-display-services {
   display: grid;
   gap: 1.5rem;
@@ -382,6 +395,12 @@ body {
   font-weight: 700;
 }
 
+.appointment-display-service-code {
+  color: var(--pnc-text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
 .appointment-display-number {
   color: var(--pnc-primary);
   font-size: clamp(4rem, 12vw, 8rem);
@@ -394,6 +413,18 @@ body {
 .appointment-display-waiting,
 .appointment-display-footer {
   color: var(--pnc-text-muted);
+}
+
+.appointment-display-booking-capacity {
+  color: var(--pnc-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+}
+
+.appointment-display-booking-slot {
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
 }
 
 .appointment-display-footer {

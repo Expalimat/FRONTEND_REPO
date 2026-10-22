@@ -41,6 +41,7 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
   const [scheduleEdits, setScheduleEdits] = useState({});
   const [closures, setClosures] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [dateAppointments, setDateAppointments] = useState([]);
   const [slotDate, setSlotDate] = useState(manilaDate());
   const [slotStart, setSlotStart] = useState('');
   const [slotEnd, setSlotEnd] = useState('');
@@ -66,6 +67,7 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
   const [editEarlyArrivalWindow, setEditEarlyArrivalWindow] = useState('30');
   const [closureReason, setClosureReason] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -95,16 +97,23 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     setSelectedServiceId((current) => current || list.find((service) => service.isActive)?.id || list[0]?.id || '');
   }, []);
 
+  const loadDateAppointments = useCallback(async () => {
+    if (!slotDate) return [];
+    return appointmentService.getAppointments({ date: slotDate });
+  }, [slotDate]);
+
   const loadServiceData = useCallback(async () => {
     if (!selectedServiceId) {
       setSlots([]);
       setAppointments([]);
+      setDateAppointments([]);
       return;
     }
-    const [slotList, queue, closureList] = await Promise.all([
+    const [slotList, queue, closureList, bookingList] = await Promise.all([
       appointmentService.getServiceSlots(selectedServiceId, slotDate),
       appointmentService.getQueue(selectedServiceId),
-      appointmentService.getClosures(selectedServiceId)
+      appointmentService.getClosures(selectedServiceId),
+      loadDateAppointments()
     ]);
     setSlots(slotList);
     setCapacityEdits(Object.fromEntries(slotList.map((slot) => [slot.id, String(slot.capacity)])));
@@ -115,9 +124,11 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     }])));
     setClosures(closureList);
     setAppointments(queue.appointments);
-  }, [selectedServiceId, slotDate]);
+    setDateAppointments(bookingList);
+  }, [selectedServiceId, slotDate, loadDateAppointments]);
 
   const refresh = useCallback(async () => {
+    setRefreshing(true);
     try {
       await Promise.all([loadServices(), loadServiceData()]);
       setError('');
@@ -125,6 +136,7 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
       setError(err.message || 'Unable to refresh appointment management data.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [loadServices, loadServiceData]);
 
@@ -135,12 +147,18 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       if (!selectedServiceId) return;
-      appointmentService.getQueue(selectedServiceId)
-        .then((queue) => setAppointments(queue.appointments))
+      Promise.all([
+        appointmentService.getQueue(selectedServiceId),
+        loadDateAppointments()
+      ])
+        .then(([queue, bookingList]) => {
+          setAppointments(queue.appointments);
+          setDateAppointments(bookingList);
+        })
         .catch((err) => setError(err.message || 'Unable to refresh the service queue.'));
     }, 10000);
     return () => window.clearInterval(intervalId);
-  }, [selectedServiceId]);
+  }, [selectedServiceId, loadDateAppointments]);
 
   const runAction = async (action, successMessage) => {
     setSaving(true);
@@ -341,7 +359,11 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                   onChange={(event) => setSelectedServiceId(event.target.value)}
                 >
                   {services.map((service) => (
-                    <option value={service.id} key={service.id}>{service.code} · {service.name}{service.isActive ? '' : ' (paused)'}</option>
+                    <option value={service.id} key={service.id}>
+                      {service.code} · {service.name}
+                      {service.publicBookable ? ' · Public booking' : ''}
+                      {service.isActive ? '' : ' (paused)'}
+                    </option>
                   ))}
                 </select>
                 {selectedService && isServiceAdministrator && (
@@ -350,6 +372,10 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                   </button>
                 )}
               </div>
+              <p className="form-text mb-0 mt-2">
+                Time slots are specific to the selected service. Incoming-freshman bookings use
+                Freshman Enrollment Appointment, not CTC / Document Claiming.
+              </p>
 
               {selectedService && isServiceAdministrator && (
                 <form className="mt-3" onSubmit={handleUpdateService}>
@@ -611,12 +637,62 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
         </div>
       </div>
 
+      {slotDate && (
+        <section className="pnc-card mb-4">
+          <div className="pnc-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>
+              <i className="bi bi-calendar-check text-success me-2"></i>
+              Bookings for {slotDate}
+            </span>
+            <div className="d-flex align-items-center gap-2">
+              <span className="badge text-bg-primary">{dateAppointments.length} booked</span>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={refresh} disabled={!selectedServiceId || refreshing}>
+                <i className={`bi ${refreshing ? 'bi-arrow-repeat' : 'bi-arrow-clockwise'} me-1`}></i>
+                {refreshing ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+          <div className="pnc-card-body">
+            {dateAppointments.length === 0 ? (
+              <p className="text-muted text-center mb-0">No appointments have been booked for this date.</p>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover table-pnc align-middle mb-0">
+                  <thead>
+                    <tr><th>Reference</th><th>Student / applicant</th><th>Service</th><th>Time</th><th>Queue ticket</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {dateAppointments.map((appointment) => (
+                      <tr key={appointment.id}>
+                        <td className="fw-semibold">{appointment.appointmentNumber}</td>
+                        <td>
+                          {appointment.studentName}
+                          <div className="small text-muted">{appointment.studentNumber || 'Guest applicant'}</div>
+                        </td>
+                        <td>{appointment.serviceName}</td>
+                        <td>{formatTime(appointment.startTime)}–{formatTime(appointment.endTime)}</td>
+                        <td>{appointment.queueTicket || 'Assigned at check-in'}</td>
+                        <td>
+                          <span className={`badge ${statusClass[appointment.status] || 'text-bg-secondary'}`}>
+                            {appointment.status.replaceAll('_', ' ')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="form-text mb-0 mt-2">
+              This list includes bookings across services and refreshes automatically. Queue actions remain in the service-specific section below.
+            </p>
+          </div>
+        </section>
+      )}
+
       <section className="pnc-card">
         <div className="pnc-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
           <span><i className="bi bi-person-lines-fill text-success me-2"></i>Today's appointments and queue</span>
-          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => loadServiceData()} disabled={!selectedServiceId}>
-            <i className="bi bi-arrow-clockwise me-1"></i>Refresh
-          </button>
         </div>
         <div className="pnc-card-body">
           {!selectedService ? (
