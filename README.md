@@ -37,11 +37,13 @@ grade lists load their data one page at a time from the API. Table searches and
 filters are applied on the server for paginated results.
 
 Students can view services and prerequisites, book available times, view their
-own references and queue estimates, check in on the appointment date, cancel
-eligible bookings, and reschedule by selecting a new time from **Appointments**.
-Registrar staff can configure service rules and capacity, close slots or dates,
-and manage check-in, queue calls, service start/completion, no-shows, and
-reasoned overrides from **Appointments & Queue**. Queue order starts
-first-checked-in, first-served; estimates are not guarantees. Open
+own references and queue estimates, cancel eligible bookings, and reschedule
+by selecting a new time from **Appointments**. CTC students can also join a
+virtual queue without an appointment, track their ticket, and cancel while
+waiting; freshman enrollment remains appointment-only. Registrar staff can
+configure service rules and capacity, pause or resume queue intake, close
+slots or dates, and manage check-in, queue calls, service start/completion,
+no-shows, and reasoned overrides from **Appointments & Queue**. Queue order is
+first-in, first-called; estimates are not guarantees. Open
 `/appointment-queue/display` on a public waiting-room screen to show queue
 numbers without student details.

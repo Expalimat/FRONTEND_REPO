@@ -33,6 +33,9 @@ export const AppointmentsPage = () => {
   const [services, setServices] = useState([]);
   const [slots, setSlots] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [queueServices, setQueueServices] = useState([]);
+  const [queueTickets, setQueueTickets] = useState([]);
+  const [queueUpdatedAt, setQueueUpdatedAt] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [serviceId, setServiceId] = useState('');
   const [slotId, setSlotId] = useState('');
@@ -40,6 +43,8 @@ export const AppointmentsPage = () => {
   const [purpose, setPurpose] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [joiningServiceId, setJoiningServiceId] = useState('');
+  const [cancellingTicketId, setCancellingTicketId] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -51,23 +56,44 @@ export const AppointmentsPage = () => {
     }
   }, []);
 
+  const loadVirtualQueue = useCallback(async () => {
+    try {
+      const [serviceList, tickets] = await Promise.all([
+        appointmentService.getVirtualQueueServices(),
+        appointmentService.getMyVirtualQueueTickets()
+      ]);
+      setQueueServices(serviceList);
+      setQueueTickets(tickets);
+      setQueueUpdatedAt(new Date());
+    } catch (err) {
+      setError(err.message || 'Unable to refresh your virtual queue ticket.');
+    }
+  }, []);
+
   useEffect(() => {
-    const intervalId = window.setInterval(loadAppointments, 10000);
+    const intervalId = window.setInterval(() => {
+      loadAppointments();
+      loadVirtualQueue();
+    }, 10000);
     return () => window.clearInterval(intervalId);
-  }, [loadAppointments]);
+  }, [loadAppointments, loadVirtualQueue]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError('');
       try {
-        const [serviceList, appointmentList, documentList] = await Promise.all([
+        const [serviceList, appointmentList, documentList, virtualQueueServices, virtualQueueTickets] = await Promise.all([
           appointmentService.getServices(),
           appointmentService.getAppointments(),
-          documentService.getRequestsByStudent(currentUser?.studentNumber, {})
+          documentService.getRequestsByStudent(currentUser?.studentNumber, {}),
+          appointmentService.getVirtualQueueServices(),
+          appointmentService.getMyVirtualQueueTickets()
         ]);
         setServices(serviceList);
         setAppointments(appointmentList);
+        setQueueServices(virtualQueueServices);
+        setQueueTickets(virtualQueueTickets);
         setDocuments(documentList.filter((doc) => doc.status !== 'Rejected'));
         setServiceId((current) => current || serviceList[0]?.id || '');
       } catch (err) {
@@ -98,6 +124,7 @@ export const AppointmentsPage = () => {
 
   const selectedService = services.find((service) => service.id === serviceId);
   const selectedSlot = slots.find((slot) => slot.id === slotId);
+  const activeQueueTicket = queueTickets[0];
   const upcomingAppointments = useMemo(
     () => appointments.filter((appointment) => activeStatuses.includes(appointment.status)),
     [appointments]
@@ -151,6 +178,39 @@ export const AppointmentsPage = () => {
     }
   };
 
+  const handleJoinQueue = async (virtualQueueService) => {
+    setJoiningServiceId(virtualQueueService.id);
+    setError('');
+    setNotice('');
+    try {
+      const ticket = await appointmentService.joinVirtualQueue(virtualQueueService.id);
+      setQueueTickets([ticket]);
+      setNotice(`You joined the ${virtualQueueService.name} queue. Your ticket is ${ticket.queueTicket}.`);
+      await loadVirtualQueue();
+    } catch (err) {
+      setError(err.message || 'Unable to join this virtual queue.');
+      await loadVirtualQueue();
+    } finally {
+      setJoiningServiceId('');
+    }
+  };
+
+  const handleCancelQueueTicket = async (ticket) => {
+    if (!window.confirm(`Cancel virtual queue ticket ${ticket.queueTicket}?`)) return;
+    setCancellingTicketId(ticket.queueEntryId);
+    setError('');
+    try {
+      await appointmentService.cancelVirtualQueueTicket(ticket.queueEntryId);
+      setNotice(`Virtual queue ticket ${ticket.queueTicket} was cancelled.`);
+      await loadVirtualQueue();
+    } catch (err) {
+      setError(err.message || 'Unable to cancel your virtual queue ticket.');
+      await loadVirtualQueue();
+    } finally {
+      setCancellingTicketId('');
+    }
+  };
+
   const handleReschedule = async (appointment) => {
     if (!selectedSlot || selectedSlot.id === appointment.slotId) return;
     if (!window.confirm(`Reschedule ${appointment.appointmentNumber} to ${formatAppointmentDate(selectedSlot.appointmentDate, selectedSlot.startTime, selectedSlot.endTime)}?`)) return;
@@ -192,6 +252,81 @@ export const AppointmentsPage = () => {
           <button type="button" className="btn-close" onClick={() => setNotice('')} aria-label="Close"></button>
         </div>
       )}
+
+      <section className="pnc-card mb-4">
+        <div className="pnc-card-header">
+          <span><i className="bi bi-people me-2 text-success"></i>Join a virtual queue</span>
+        </div>
+        <div className="pnc-card-body">
+          {queueTickets.length > 0 && (
+            <div className="alert alert-info" role="status">
+              <div className="fw-semibold">Your active ticket: {activeQueueTicket.queueTicket}</div>
+              <div>{activeQueueTicket.serviceName} · {activeQueueTicket.queueStatus?.replaceAll('_', ' ')}</div>
+              {activeQueueTicket.queueStatus === 'WAITING' && (
+                <div className="small mt-1">
+                  Position {activeQueueTicket.queuePosition ?? '—'} · {activeQueueTicket.eligiblePeopleAhead ?? 0} people ahead · estimated wait {activeQueueTicket.estimatedWaitMinutes ?? 0} min (estimate only)
+                </div>
+              )}
+              {queueServices.find((service) => service.id === activeQueueTicket.serviceId)?.instructions && (
+                <div className="small mt-1">{queueServices.find((service) => service.id === activeQueueTicket.serviceId).instructions}</div>
+              )}
+              {activeQueueTicket.queueStatus === 'WAITING' && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger mt-2"
+                  onClick={() => handleCancelQueueTicket(activeQueueTicket)}
+                  disabled={cancellingTicketId === activeQueueTicket.queueEntryId}
+                >
+                  {cancellingTicketId === activeQueueTicket.queueEntryId ? 'Cancelling…' : 'Cancel ticket'}
+                </button>
+              )}
+              {queueUpdatedAt && (
+                <div className="small text-muted mt-2">
+                  Last updated {new Intl.DateTimeFormat('en-PH', {
+                    timeZone: 'Asia/Manila',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  }).format(queueUpdatedAt)} (Manila time)
+                </div>
+              )}
+            </div>
+          )}
+          {queueServices.length === 0 ? (
+            <p className="text-muted mb-0">Direct virtual queue tickets are not enabled for a service right now.</p>
+          ) : (
+            <div className="row g-3">
+              {queueServices.map((queueService) => (
+                <div className="col-md-6" key={queueService.id}>
+                  <div className="border rounded p-3 h-100">
+                    <div className="d-flex justify-content-between gap-2">
+                      <div className="fw-semibold">{queueService.name}</div>
+                      <span className={`badge ${queueService.acceptingTickets ? 'text-bg-success' : 'text-bg-secondary'}`}>
+                        {queueService.queuePaused ? 'Paused' : queueService.acceptingTickets ? 'Open' : 'Full'}
+                      </span>
+                    </div>
+                    <div className="small text-muted mt-1">
+                      {queueService.issuedCount}/{queueService.queueCapacity} tickets issued today · {queueService.remainingCount} remaining
+                    </div>
+                    {queueService.instructions && <p className="small mt-2 mb-2">{queueService.instructions}</p>}
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-pnc-primary mt-2"
+                      onClick={() => handleJoinQueue(queueService)}
+                      disabled={!queueService.acceptingTickets || Boolean(activeQueueTicket) || Boolean(joiningServiceId)}
+                    >
+                      {joiningServiceId === queueService.id ? 'Joining…' : 'Join queue'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="form-text mb-0 mt-3">
+            A virtual queue ticket does not reserve an appointment time. Keep this page open or return to see live status and wait estimates.
+          </p>
+        </div>
+      </section>
 
       <section className="pnc-card mb-4">
         <div className="pnc-card-header">
