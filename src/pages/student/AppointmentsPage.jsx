@@ -6,13 +6,6 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { appointmentService } from '../../services/appointmentService';
 import { documentService } from '../../services/documentService';
 
-const manilaDate = () => new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Manila',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date());
-
 const formatAppointmentDate = (date, startTime, endTime) =>
   `${new Date(`${date}T${startTime}:00+08:00`).toLocaleDateString('en-PH', {
     timeZone: 'Asia/Manila',
@@ -57,6 +50,11 @@ export const AppointmentsPage = () => {
       setError(err.message || 'Unable to load your appointments.');
     }
   }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(loadAppointments, 10000);
+    return () => window.clearInterval(intervalId);
+  }, [loadAppointments]);
 
   useEffect(() => {
     const load = async () => {
@@ -169,20 +167,6 @@ export const AppointmentsPage = () => {
         loadAppointments(),
         appointmentService.getAvailableSlots({ serviceId }).then(setSlots).catch(() => {})
       ]);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCheckIn = async (appointment) => {
-    setSubmitting(true);
-    setError('');
-    try {
-      await appointmentService.checkIn(appointment.id);
-      setNotice(`Checked in for ${appointment.appointmentNumber}. Your queue ticket will appear below.`);
-      await loadAppointments();
-    } catch (err) {
-      setError(err.message || 'Unable to check in for this appointment.');
     } finally {
       setSubmitting(false);
     }
@@ -326,7 +310,6 @@ export const AppointmentsPage = () => {
         emptyMessage="Book an available time above to schedule your visit."
         onCancel={handleCancel}
         onReschedule={handleReschedule}
-        onCheckIn={handleCheckIn}
         selectedSlot={selectedSlot}
         submitting={submitting}
       />
@@ -340,7 +323,7 @@ export const AppointmentsPage = () => {
   );
 };
 
-const AppointmentList = ({ title, appointments, emptyTitle, emptyMessage, onCancel, onReschedule, onCheckIn, selectedSlot, submitting }) => (
+const AppointmentList = ({ title, appointments, emptyTitle, emptyMessage, onCancel, onReschedule, selectedSlot, submitting }) => (
   <section className="pnc-card mb-4">
     <div className="pnc-card-header"><span>{title}</span></div>
     <div className="pnc-card-body p-0">
@@ -372,11 +355,6 @@ const AppointmentList = ({ title, appointments, emptyTitle, emptyMessage, onCanc
                           )}
                         </>
                       )}
-                      {appointment.status === 'CONFIRMED' &&
-                        appointment.appointmentDate === manilaDate() &&
-                        onCheckIn && (
-                          <button type="button" className="btn btn-sm btn-outline-success" onClick={() => onCheckIn(appointment)} disabled={submitting}>Check in</button>
-                        )}
                       {appointment.queuePosition && (
                         <span className="small text-muted align-self-center">
                                                 Position {appointment.queuePosition} · estimated wait {appointment.estimatedWaitMinutes} min (estimate only)

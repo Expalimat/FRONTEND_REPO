@@ -195,6 +195,41 @@ body {
   margin-top: 2rem;
 }
 
+.login-disclaimer {
+  background: #f7faf8;
+  border: 1px solid var(--pnc-border-color);
+  border-radius: 0.75rem;
+  color: var(--pnc-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1rem;
+}
+
+.login-disclaimer h3 {
+  color: var(--pnc-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+}
+
+.login-disclaimer p {
+  margin: 0 0 0.45rem;
+}
+
+.login-disclaimer a {
+  color: var(--pnc-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.login-developer-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
 .incoming-freshman-cta {
   background: var(--pnc-primary-light);
   border: 1px solid var(--pnc-primary-border, #b7d7c4);
@@ -947,6 +982,16 @@ body {
 
   .login-panel {
     padding: 2rem 1.25rem;
+  }
+
+  .login-disclaimer {
+    font-size: 0.73rem;
+    margin-top: 1.25rem;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .login-footer {
+    margin-top: 1.25rem;
   }
 }
 

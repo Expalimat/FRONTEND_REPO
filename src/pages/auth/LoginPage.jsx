@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+const DEVELOPER_GITHUB_USERNAMES = [
+  'dalmaciouno',
+  'doktrino',
+  'wowersrex123',
+  'dnd-nathan',
+  'jeynowaski',
+  'expalimat'
+];
+
 export const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -147,11 +156,44 @@ export const LoginPage = () => {
                 )}
               </button>
             </form>
+
+            <aside className="login-disclaimer" aria-labelledby="login-disclaimer-title">
+              <h3 id="login-disclaimer-title">Project Disclaimer</h3>
+              <p>
+                This website is a student-developed project created for educational and demonstration
+                purposes only. It is not the official Online Enrollment and Student Services (OESS)
+                of Pamantasan ng Cabuyao (PNC) and is not affiliated with or endorsed by the university.
+              </p>
+              <p>
+                For official enrollment services and university-related transactions, visit the{' '}
+                <a href="https://pinnacle.pnc.edu.ph" target="_blank" rel="noopener noreferrer">
+                  official PNC website: pinnacle.pnc.edu.ph
+                </a>.
+              </p>
+              <div className="mb-0">
+                <strong>Developed by:</strong>
+                <ul className="login-developer-list">
+                  {DEVELOPER_GITHUB_USERNAMES.map((githubUsername) => (
+                    <li key={githubUsername}>
+                      <a
+                        href={`https://github.com/${githubUsername}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {githubUsername}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <span className="d-block mt-1">
+                  Use project-issued demonstration accounts only; do not enter your official PNC password.
+                </span>
+              </div>
+            </aside>
           </div>
 
           <div className="login-footer">
-            <span>Pamantasan ng Cabuyao &bull; Official Student Portal</span>
-            <span>For technical inquiries, contact MIS Helpdesk at helpdesk@pnc.edu.ph</span>
+            <span>Student Project &bull; For Educational Purposes Only</span>
           </div>
         </section>
       </div>
