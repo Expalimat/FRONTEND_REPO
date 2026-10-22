@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+const DEVELOPER_GITHUB_USERNAMES = [
+  'dalmaciouno',
+  'doktrino',
+  'wowersrex123',
+  'dnd-nathan',
+  'jeynowaski',
+  'expalimat'
+];
+
 export const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +52,6 @@ export const LoginPage = () => {
         <section className="login-visual" aria-label="Pamantasan ng Cabuyao campus">
           <div className="login-visual-image" aria-hidden="true"></div>
           <div className="login-visual-overlay">
-            <div className="login-logo login-logo-corner d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm">PnC</div>
             <div className="login-pitch">
               <p>Pamantasan ng Cabuyao: affordable, quality education that shapes Cabuyeños to be world-ready and committed to serving their community.</p>
             </div>
@@ -52,6 +60,7 @@ export const LoginPage = () => {
 
         <section className="login-panel">
           <div className="login-panel-content">
+            <div className="login-logo login-logo-panel d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm">PnC</div>
             <div className="login-panel-heading">
               <span className="login-kicker">Pamantasan ng Cabuyao</span>
               <h2>Sign In to Your Account</h2>
@@ -121,6 +130,14 @@ export const LoginPage = () => {
                 </div>
               </div>
 
+              <div className="incoming-freshman-cta rounded-3 p-3 mb-4">
+                <div className="fw-semibold text-dark">Incoming Freshman? Schedule Your Enrollment Appointment Here.</div>
+                <div className="small text-muted mb-2">Not yet enrolled and don’t have a student account? Start here to schedule your enrollment appointment.</div>
+                <button type="button" className="btn btn-link p-0 fw-semibold text-success" onClick={() => navigate('/incoming-freshman')}>
+                  Start appointment <i className="bi bi-arrow-right ms-1" />
+                </button>
+              </div>
+
               <button
                 type="submit"
                 className="btn login-submit w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
@@ -139,11 +156,44 @@ export const LoginPage = () => {
                 )}
               </button>
             </form>
+
+            <aside className="login-disclaimer" aria-labelledby="login-disclaimer-title">
+              <h3 id="login-disclaimer-title">Project Disclaimer</h3>
+              <p>
+                This website is a student-developed project created for educational and demonstration
+                purposes only. It is not the official Online Enrollment and Student Services (OESS)
+                of Pamantasan ng Cabuyao (PNC) and is not affiliated with or endorsed by the university.
+              </p>
+              <p>
+                For official enrollment services and university-related transactions, visit the{' '}
+                <a href="https://pinnacle.pnc.edu.ph" target="_blank" rel="noopener noreferrer">
+                  official PNC website: pinnacle.pnc.edu.ph
+                </a>.
+              </p>
+              <div className="mb-0">
+                <strong>Developed by:</strong>
+                <ul className="login-developer-list">
+                  {DEVELOPER_GITHUB_USERNAMES.map((githubUsername) => (
+                    <li key={githubUsername}>
+                      <a
+                        href={`https://github.com/${githubUsername}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {githubUsername}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <span className="d-block mt-1">
+                  Use project-issued demonstration accounts only; do not enter your official PNC password.
+                </span>
+              </div>
+            </aside>
           </div>
 
           <div className="login-footer">
-            <span>Pamantasan ng Cabuyao &bull; Official Student Portal</span>
-            <span>For technical inquiries, contact MIS Helpdesk at helpdesk@pnc.edu.ph</span>
+            <span>Student Project &bull; For Educational Purposes Only</span>
           </div>
         </section>
       </div>

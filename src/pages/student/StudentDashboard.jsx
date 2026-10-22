@@ -105,7 +105,7 @@ export const StudentDashboard = () => {
           <DashboardCard
             title="Clearance Status"
             value={clearance ? clearance.overallStatus : 'Clearance Pending'}
-            subtitle="All Offices Signoff"
+            subtitle="Office signoff"
             icon="bi-clipboard-check"
             color="info"
             onClick={() => navigate('/student/clearance')}
@@ -113,9 +113,9 @@ export const StudentDashboard = () => {
         </div>
         <div className="col-sm-6 col-xl-3">
           <DashboardCard
-            title="Pending Documents"
+            title="Documents"
             value={pendingDocsCount}
-            subtitle="Requests in progress"
+            subtitle="In progress"
             icon="bi-file-earmark-text"
             color="warning"
             onClick={() => navigate('/student/documents')}

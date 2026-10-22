@@ -49,8 +49,8 @@ export const CashierDashboard = () => {
   return (
     <div>
       <PageHeader
-        title="Cashier & Treasury Dashboard"
-        subtitle="Monitor student payment receipts, verify bank transactions, and manage financial signoffs."
+        title="Cashier Dashboard"
+        subtitle="Review payments and financial clearances."
       />
 
       {/* Dashboard Stat Cards */}
@@ -89,7 +89,7 @@ export const CashierDashboard = () => {
           <DashboardCard
             title="Clearance Queue"
             value={pendingCashierClearance.length}
-            subtitle="Pending financial review"
+            subtitle="Finance review"
             icon="bi-clipboard-check"
             color="info"
             onClick={() => navigate('/cashier/clearance')}
