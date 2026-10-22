@@ -65,6 +65,9 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
   const [editCancellationCutoff, setEditCancellationCutoff] = useState('0');
   const [editLateGrace, setEditLateGrace] = useState('0');
   const [editEarlyArrivalWindow, setEditEarlyArrivalWindow] = useState('30');
+  const [editQueueEnabled, setEditQueueEnabled] = useState(false);
+  const [editQueuePaused, setEditQueuePaused] = useState(false);
+  const [editQueueCapacity, setEditQueueCapacity] = useState('50');
   const [closureReason, setClosureReason] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,6 +92,9 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     setEditCancellationCutoff(String(selectedService?.cancellationCutoffMinutes || 0));
     setEditLateGrace(String(selectedService?.lateArrivalGraceMinutes || 0));
     setEditEarlyArrivalWindow(String(selectedService?.earlyArrivalWindowMinutes ?? 30));
+    setEditQueueEnabled(Boolean(selectedService?.queueEnabled));
+    setEditQueuePaused(Boolean(selectedService?.queuePaused));
+    setEditQueueCapacity(String(selectedService?.queueCapacity || 50));
   }, [selectedServiceId, selectedService]);
 
   const loadServices = useCallback(async () => {
@@ -196,7 +202,10 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
         bookingWindowDays: Number(editBookingWindow),
         cancellationCutoffMinutes: Number(editCancellationCutoff),
         lateArrivalGraceMinutes: Number(editLateGrace),
-        earlyArrivalWindowMinutes: Number(editEarlyArrivalWindow)
+        earlyArrivalWindowMinutes: Number(editEarlyArrivalWindow),
+        queueEnabled: editQueueEnabled,
+        queuePaused: editQueuePaused,
+        queueCapacity: Number(editQueueCapacity)
       });
       setServices((list) => list.map((service) => service.id === updated.id ? updated : service));
     }, 'Appointment service updated.');
@@ -268,6 +277,14 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     );
   };
 
+  const toggleQueuePause = () => runAction(
+    async () => {
+      const updated = await appointmentService.setQueuePause(selectedService.id, !selectedService.queuePaused);
+      setServices((list) => list.map((service) => service.id === updated.id ? updated : service));
+    },
+    selectedService.queuePaused ? 'Virtual queue intake resumed.' : 'Virtual queue intake paused; existing tickets remain available for processing.'
+  );
+
   const toggleSlot = (slot) => runAction(
     () => appointmentService.updateSlot(slot.id, { status: slot.status === 'Open' ? 'Closed' : 'Open' }),
     `Appointment time ${slot.status === 'Open' ? 'closed' : 'reopened'}.`
@@ -297,7 +314,9 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     const reason = window.prompt('Reason for calling this appointment out of queue order:');
     if (!reason?.trim()) return;
     return runAction(
-      () => appointmentService.overrideCall(selectedServiceId, { appointmentId: appointment.id, reason: reason.trim() }),
+      () => appointment.walkIn
+        ? appointmentService.overrideQueueEntry(appointment.queueEntryId, reason.trim())
+        : appointmentService.overrideCall(selectedServiceId, { appointmentId: appointment.id, reason: reason.trim() }),
       `${appointment.queueTicket} called by staff override.`
     );
   };
@@ -306,7 +325,9 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
     const reason = window.prompt(`Reason for cancelling ${appointment.appointmentNumber}:`);
     if (!reason?.trim()) return;
     return runAction(
-      () => appointmentService.cancel(appointment.id, reason.trim()),
+      () => appointment.walkIn
+        ? appointmentService.cancelQueueEntry(appointment.queueEntryId, reason.trim())
+        : appointmentService.cancel(appointment.id, reason.trim()),
       `${appointment.appointmentNumber} cancelled.`
     );
   };
@@ -314,7 +335,9 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
   const finishAppointment = (appointment, status) => {
     const reason = status === 'NO_SHOW' ? window.prompt(`Reason for marking ${appointment.appointmentNumber} no-show (optional):`) || '' : '';
     return runAction(
-      () => appointmentService.finish(appointment.id, status, reason),
+      () => appointment.walkIn
+        ? appointmentService.finishQueueEntry(appointment.queueEntryId, status, reason)
+        : appointmentService.finish(appointment.id, status, reason),
       `${appointment.appointmentNumber} marked ${status.toLowerCase().replace('_', ' ')}.`
     );
   };
@@ -371,6 +394,11 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                     {selectedService.isActive ? 'Pause service' : 'Activate service'}
                   </button>
                 )}
+                {selectedService && (
+                  <button type="button" className={`btn ${selectedService.queuePaused ? 'btn-outline-success' : 'btn-outline-warning'} text-nowrap`} onClick={toggleQueuePause} disabled={saving}>
+                    {selectedService.queuePaused ? 'Resume intake' : 'Pause intake'}
+                  </button>
+                )}
               </div>
               <p className="form-text mb-0 mt-2">
                 Time slots are specific to the selected service. Incoming-freshman bookings use
@@ -404,6 +432,20 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                     <div className="col-6">
                       <label className="form-label small" htmlFor="editEarlyArrival">Early check-in window (minutes)</label>
                       <input id="editEarlyArrival" type="number" min="0" max="1440" className="form-control" value={editEarlyArrivalWindow} onChange={(event) => setEditEarlyArrivalWindow(event.target.value)} required disabled={saving} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label small" htmlFor="editQueueCapacity">Daily virtual queue capacity</label>
+                      <input id="editQueueCapacity" type="number" min="1" max="500" className="form-control" value={editQueueCapacity} onChange={(event) => setEditQueueCapacity(event.target.value)} required disabled={saving} />
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check">
+                        <input id="editQueueEnabled" type="checkbox" className="form-check-input" checked={editQueueEnabled} onChange={(event) => setEditQueueEnabled(event.target.checked)} disabled={saving || selectedService.code === 'FRESHMAN-ENROLLMENT'} />
+                        <label className="form-check-label small" htmlFor="editQueueEnabled">Allow students to join this virtual queue without an appointment{selectedService.code === 'FRESHMAN-ENROLLMENT' ? ' (freshman enrollment stays appointment-only)' : ''}</label>
+                      </div>
+                      <div className="form-check">
+                        <input id="editQueuePaused" type="checkbox" className="form-check-input" checked={editQueuePaused} onChange={(event) => setEditQueuePaused(event.target.checked)} disabled={saving} />
+                        <label className="form-check-label small" htmlFor="editQueuePaused">Pause new queue intake (existing tickets can still be processed)</label>
+                      </div>
                     </div>
                   </div>
                   <button className="btn btn-sm btn-outline-primary mt-2" type="submit" disabled={saving}>Save service</button>
@@ -706,8 +748,8 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                   {currentAppointment && <div>{currentAppointment.studentName} · {currentAppointment.appointmentNumber}</div>}
                 </div>
                 <div className="text-end">
-                  <div className="fw-semibold">{waitingAppointments.length} checked in</div>
-                  <button type="button" className="btn btn-pnc-primary mt-2" onClick={() => runAction(() => appointmentService.callNext(selectedServiceId), 'Next appointment called.')} disabled={saving || Boolean(currentAppointment) || waitingAppointments.length === 0}>
+                  <div className="fw-semibold">{waitingAppointments.length} waiting</div>
+                  <button type="button" className="btn btn-pnc-primary mt-2" onClick={() => runAction(() => appointmentService.callNext(selectedServiceId), 'Next student called.')} disabled={saving || Boolean(currentAppointment) || waitingAppointments.length === 0}>
                     <i className="bi bi-megaphone me-2"></i>Call next
                   </button>
                 </div>
@@ -724,7 +766,7 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                         <tr key={appointment.id}>
                           <td className="fw-semibold">{appointment.appointmentNumber}{appointment.documentTrackingNumber && <div className="small text-muted">{appointment.documentTrackingNumber}</div>}</td>
                           <td>{appointment.studentName}<div className="small text-muted">{appointment.studentNumber}</div></td>
-                          <td>{formatTime(appointment.startTime)}–{formatTime(appointment.endTime)}</td>
+                          <td>{appointment.walkIn ? 'Virtual walk-in' : `${formatTime(appointment.startTime)}–${formatTime(appointment.endTime)}`}</td>
                           <td>{appointment.queueTicket || '—'}</td>
                           <td><span className={`badge ${statusClass[appointment.status] || 'text-bg-secondary'}`}>{appointment.status.replaceAll('_', ' ')}</span></td>
                           <td>
@@ -733,21 +775,21 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                                 <>
                                   <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => handleCheckIn(appointment)} disabled={saving}>Check in</button>
                                   <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleStaffCancel(appointment)} disabled={saving}>Cancel</button>
-                                  {appointmentHasEnded(appointment) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
+                                  {!appointment.walkIn && appointmentHasEnded(appointment) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
                                 </>
                               )}
                               {appointment.status === 'WAITING' && appointment.queueStatus === 'WAITING' && (
                                 <>
                                   <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => handleOverrideCall(appointment)} disabled={saving}>Call with override</button>
                                   <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleStaffCancel(appointment)} disabled={saving}>Cancel</button>
-                                  {appointmentHasEnded(appointment) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
+                                  {(appointment.walkIn || appointmentHasEnded(appointment)) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
                                 </>
                               )}
                               {appointment.status === 'WAITING' && appointment.queueStatus === 'CALLED' && (
                                 <>
-                                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => runAction(() => appointmentService.recall(appointment.id), `${appointment.queueTicket} recalled.`)} disabled={saving}>Recall</button>
-                                  <button type="button" className="btn btn-sm btn-success" onClick={() => runAction(() => appointmentService.start(appointment.id), `${appointment.appointmentNumber} service started.`)} disabled={saving}>Start service</button>
-                                  {appointmentHasEnded(appointment) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
+                                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => runAction(() => appointment.walkIn ? appointmentService.recallQueueEntry(appointment.queueEntryId) : appointmentService.recall(appointment.id), `${appointment.queueTicket} recalled.`)} disabled={saving}>Recall</button>
+                                  <button type="button" className="btn btn-sm btn-success" onClick={() => runAction(() => appointment.walkIn ? appointmentService.startQueueEntry(appointment.queueEntryId) : appointmentService.start(appointment.id), `${appointment.appointmentNumber} service started.`)} disabled={saving}>Start service</button>
+                                  {(appointment.walkIn || appointmentHasEnded(appointment)) && <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => finishAppointment(appointment, 'NO_SHOW')} disabled={saving}>No-show</button>}
                                 </>
                               )}
                               {appointment.status === 'SERVING' && (
