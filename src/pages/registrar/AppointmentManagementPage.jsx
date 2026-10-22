@@ -439,8 +439,8 @@ export const AppointmentManagementPage = ({ dashboardPath = '/registrar/dashboar
                     </div>
                     <div className="col-12">
                       <div className="form-check">
-                        <input id="editQueueEnabled" type="checkbox" className="form-check-input" checked={editQueueEnabled} onChange={(event) => setEditQueueEnabled(event.target.checked)} disabled={saving || selectedService.code === 'FRESHMAN-ENROLLMENT'} />
-                        <label className="form-check-label small" htmlFor="editQueueEnabled">Allow students to join this virtual queue without an appointment{selectedService.code === 'FRESHMAN-ENROLLMENT' ? ' (freshman enrollment stays appointment-only)' : ''}</label>
+                        <input id="editQueueEnabled" type="checkbox" className="form-check-input" checked={editQueueEnabled} onChange={(event) => setEditQueueEnabled(event.target.checked)} disabled={saving} />
+                        <label className="form-check-label small" htmlFor="editQueueEnabled">Enable direct virtual queue tickets. Public guests also need this service to be marked public-bookable.</label>
                       </div>
                       <div className="form-check">
                         <input id="editQueuePaused" type="checkbox" className="form-check-input" checked={editQueuePaused} onChange={(event) => setEditQueuePaused(event.target.checked)} disabled={saving} />
