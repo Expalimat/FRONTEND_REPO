@@ -88,7 +88,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
   }, [selectedServiceId]);
 
   useEffect(() => {
-    if (!selectedService) return;
+    if (!selectedService || creatingService) return;
     setServiceForm({
       code: selectedService.code || '',
       name: selectedService.name || '',
@@ -99,7 +99,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
       queueCapacity: Number(selectedService.queueCapacity || 50),
     });
     setEditingService(false);
-  }, [selectedServiceId, selectedService]);
+  }, [selectedServiceId, selectedService, creatingService]);
 
   useEffect(() => {
     if (!isAdministrator || !selectedServiceId || creatingService) {
