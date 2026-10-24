@@ -88,7 +88,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
   }, [selectedServiceId]);
 
   useEffect(() => {
-    if (!selectedService) return;
+    if (!selectedService || creatingService) return;
     setServiceForm({
       code: selectedService.code || '',
       name: selectedService.name || '',
@@ -99,7 +99,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
       queueCapacity: Number(selectedService.queueCapacity || 50),
     });
     setEditingService(false);
-  }, [selectedServiceId, selectedService]);
+  }, [selectedServiceId, selectedService, creatingService]);
 
   useEffect(() => {
     if (!isAdministrator || !selectedServiceId || creatingService) {
@@ -170,6 +170,24 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
       await loadServices();
     } catch (err) {
       setError(err.message || 'Unable to save queue service settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteService = async () => {
+    if (!selectedService) return;
+    if (!window.confirm(`Delete "${selectedService.name}"? This cannot be undone.`)) return;
+    setSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await virtualQueueService.deleteService(selectedService.id);
+      setNotice('Queue service deleted.');
+      setSelectedServiceId('');
+      await loadServices();
+    } catch (err) {
+      setError(err.message || 'Unable to delete queue service.');
     } finally {
       setSaving(false);
     }
@@ -275,6 +293,7 @@ export const QueueManagementPage = ({ dashboardPath = '/registrar/dashboard' }) 
                     <button type="button" className="btn btn-outline-secondary" onClick={() => { setSelectedServiceId(''); setServiceForm(emptyService); setCreatingService(true); setEditingService(true); }}>
                       New service
                     </button>
+                    <button type="button" className="btn btn-outline-danger" onClick={deleteService} disabled={saving}>Delete service</button>
                   </>
                 )}
               </div>

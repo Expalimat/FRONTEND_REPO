@@ -7,6 +7,7 @@ export const virtualQueueService = {
   getServices: async () => responseData(await api.get('/services')),
   createService: async (data) => responseData(await api.post('/services', data)),
   updateService: async (id, data) => responseData(await api.put(`/services/${id}`, data)),
+  deleteService: async (id) => responseData(await api.delete(`/services/${id}`)),
   setQueuePause: async (serviceId, queuePaused) =>
     responseData(await api.patch(`/staff/services/${serviceId}/queue-pause`, { queuePaused })),
   getStaffAssignments: async (serviceId) =>
