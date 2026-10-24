@@ -75,9 +75,9 @@ export const LoginPage = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-dark">Username / ID Number</label>
-                <div className="input-group">
+              <div className="mb-2">
+                <label className="form-label small fw-semibold text-dark mb-1" style={{ fontSize: '0.875rem' }}>Username / ID Number</label>
+                <div className="input-group input-group-sm">
                   <span className="input-group-text bg-light text-muted">
                     <i className="bi bi-person"></i>
                   </span>
@@ -89,15 +89,16 @@ export const LoginPage = () => {
                     onChange={(e) => setUsername(e.target.value)}
                     disabled={submitting}
                     required
+                    style={{ height: '38px', fontSize: '0.875rem' }}
                   />
                 </div>
               </div>
 
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <label className="form-label small fw-semibold text-dark mb-0">Password</label>
+                  <label className="form-label small fw-semibold text-dark mb-0" style={{ fontSize: '0.875rem' }}>Password</label>
                 </div>
-                <div className="input-group">
+                <div className="input-group input-group-sm">
                   <span className="input-group-text bg-light text-muted">
                     <i className="bi bi-lock"></i>
                   </span>
@@ -109,39 +110,42 @@ export const LoginPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={submitting}
                     required
+                    style={{ height: '38px', fontSize: '0.875rem' }}
                   />
                   <button
                     type="button"
                     className="btn btn-outline-secondary"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label="Toggle password visibility"
+                    style={{ height: '38px', fontSize: '0.875rem' }}
                   >
                     <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                   </button>
                 </div>
               </div>
 
-              <div className="d-flex justify-content-between align-items-center mb-4">
+              <div className="d-flex justify-content-between align-items-center mb-2">
                 <div className="form-check">
                   <input type="checkbox" className="form-check-input" id="rememberMe" defaultChecked />
-                  <label className="form-check-label small text-muted" htmlFor="rememberMe">
+                  <label className="form-check-label small text-muted" htmlFor="rememberMe" style={{ fontSize: '0.875rem' }}>
                     Remember my device
                   </label>
                 </div>
               </div>
 
-              <div className="incoming-freshman-cta rounded-3 p-3 mb-4">
-                <div className="fw-semibold text-dark">Incoming Freshman?</div>
-                <div className="small text-muted mb-2">Join a virtual queue that has been enabled for public access.</div>
-                <button type="button" className="btn btn-link p-0 fw-semibold text-success" onClick={() => navigate('/incoming-freshman/queue')}>
+              <div className="incoming-freshman-cta rounded-3">
+                <div className="incoming-title">Incoming Freshman?</div>
+                <div className="incoming-desc">Join a virtual queue that has been enabled for public access.</div>
+                <button type="button" className="btn btn-link p-0 incoming-link" onClick={() => navigate('/incoming-freshman/queue')}>
                   Access enrollment queue <i className="bi bi-arrow-right ms-1" />
                 </button>
               </div>
 
               <button
                 type="submit"
-                className="btn login-submit w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                className="btn login-submit w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
                 disabled={submitting}
+                style={{ height: '40px', fontSize: '0.875rem' }}
               >
                 {submitting ? (
                   <>
